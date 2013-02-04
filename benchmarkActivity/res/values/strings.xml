@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">benchmarkService</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="tByte">Byte</string>
+    <string name="start">Start Service</string>
+    <string name="stop">Stop Service</string>
+    <string name="time">Elapsed time:</string>
+    <string name="counter">Packets:</string>
+
+    <string name="up">up</string>
+    <string name="down">down</string>
+
+</resources>

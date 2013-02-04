@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:components="http://schemas.android.com/apk/res/com.example.benchmarkactivity"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="450dp"
+    android:layout_height="70dp"
+    android:orientation="horizontal" >
+
+    <Button
+        android:id="@+id/IBLeft"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/down"
+        android:background="@drawable/ic_left" />
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="200dp"
+        android:layout_height="match_parent"
+        android:textStyle="bold"
+        android:gravity="center_vertical|center_horizontal" 
+        android:background="@drawable/shadow"
+        />
+
+    <Button
+        android:id="@+id/IBRight"
+        android:layout_width="wrap_content"
+		android:layout_height="match_parent"
+        android:contentDescription="@string/up"
+        android:background="@drawable/ic_right" />
+</LinearLayout>
