@@ -1,7 +1,5 @@
 package com.example.benchmarkactivity;
 
-import com.example.benchmarkservice.IBenchMarkService;
-
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -10,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -19,23 +18,23 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.example.benchmarkservice.IBenchMarkService;
+
 public class MainActivity extends Activity {
 
 	//Service Variables
 	private static AIDLConnection	BoundAIDLConnection;
 	private IBenchMarkService		IBenchService;
-	private boolean					mBound;
 	private boolean					state = false;
-	private TextView	textBarByte;
 	private TextView	textResultService;
 	private Widget		widget;
 	private Button		bStartAIDLService;
 	private Button		bStopAIDLService;
-	private float		value = 0;
 	private int 		counter = 0;
 	private Intent		intent;
 	private BReceiver	bcRec;
 	private long		begin, stop;
+	private Handler		handler;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +51,6 @@ public class MainActivity extends Activity {
 		BoundAIDLConnection = new AIDLConnection();
 		intent = new Intent("com.example.benchmarkservice.IBenchMarkService");
 		bindService(intent, BoundAIDLConnection, Context.BIND_AUTO_CREATE);
-
 	}
 
 	@Override
@@ -77,6 +75,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onStop() {
 		unregisterReceiver(bcRec);
+		unbindService(BoundAIDLConnection);
 		super.onStop();
 	}
 
@@ -90,13 +89,13 @@ public class MainActivity extends Activity {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			IBenchService = IBenchMarkService.Stub.asInterface(service);
-			mBound = true;
+			Log.i("BINDER", "CONNECTED");
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			IBenchService = null;
-			mBound = false;
+			Log.i("BINDER", "DISCONNECTED");
 		}
 	}
 
@@ -105,13 +104,11 @@ public class MainActivity extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			counter++;
-			Log.i("RECEIVER", "received "+ counter + " element");
 		}
 	}
 
 	private void mapObjectAndListener(){
 		widget				= (Widget)	findViewById(R.id.Widget);
-		textBarByte			= (TextView)findViewById(R.id.textViewByte);
 		bStartAIDLService	= (Button)	findViewById(R.id.buttonStartAIDL);
 		bStopAIDLService	= (Button)	findViewById(R.id.buttonStopAIDL);
 		textResultService	= (TextView)findViewById(R.id.textView1);
@@ -120,14 +117,17 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				if(!state)
-				try {
-					state = true;
-					counter = 0;
-					begin = System.currentTimeMillis();
-					IBenchService.startRunning();
-				} catch (RemoteException e) {
-					Log.e("AIDL", "START SEND ERROR");
+				if(!state){
+					try {
+						state = true;
+						counter = 0;
+						begin = System.currentTimeMillis();
+						IBenchService.startRunning();
+						handler = new Handler();
+						show();
+					} catch (RemoteException e) {
+						Log.e("AIDL", "START SEND ERROR");
+					}
 				}
 			}
 		});
@@ -136,40 +136,74 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				if(state)
+				if(state){
 					try{
 						double servDiff = IBenchService.stopRunning();
 						stop = System.currentTimeMillis();
 						state = false;
+						handler = null;
 						double gap = stop - begin;
-						textResultService.setText("Elapsed time service: " + servDiff + 
-												"\nElapsed time activity: " + gap + 
-												"\nPackets counted: " + counter +
-												"\nPackets sended from service: " + IBenchService.getNPackets() +
-												"\nTotal sended: " + (counter * value) + " Byte" + 
+						textResultService.setText("ELAPSED TIME [ms]:\nservice: " + servDiff + 
+												"\nactivity: " + gap + 
+												"\n\nPACKETS COUNTED:\n activity: " + counter +
+												"\nservice: " + IBenchService.getNPackets() +
+												"\n\nTotal sended: " + (counter * widget.getIntValue()) + " Byte" +
+												"\n\n PACKET'S RATE [pks/ms]:" +
 												"\nActivity rate: " + (double)(counter/gap) + 
 												"\nService rate: " + (double)(IBenchService.getNPackets()/servDiff));
 					} catch(RemoteException e){
 						Log.e("AIDL", "STOP SEND ERROR");
 					}
+				}
 			}
 		});
 		
-		widget.setOnClickListener(new OnClickListener() {
+		widget.addLeftClickListener(new OnClickListener() {
 			
 			@Override
-			public void onClick(View arg0) {
-				setTextBarByte();
+			public void onClick(View v) {
 				try {
-					IBenchService.setBurstSize((int)value);
+					IBenchService.setBurstSize(widget.sub());
 				} catch (RemoteException e) {
-					Log.e("AIDL", "SETBURST SIZE");
+					Log.e("AIDL", "SETBURST SIZE -");
+				}
+			}
+		});
+		
+		widget.addRightClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				try {
+					IBenchService.setBurstSize(widget.add());
+				} catch (RemoteException e) {
+					Log.e("AIDL", "SETBURST SIZE +");
 				}
 			}
 		});
 	}
 
-	private void setTextBarByte(){
-		textBarByte.setText("" + widget.getValue() + " Byte");
+	private void show(){
+		if(handler != null){
+			handler.postDelayed(new Runnable() {
+				
+				@Override
+				public void run() {
+					double gap = System.currentTimeMillis() - begin;
+					int n = counter;
+					print(gap, n);
+				}
+			}, 1000);
+		}
+	}
+	
+	private void print(double gap, int counter) {
+		textResultService.setText("ELAPSED TIME [ms]:" + 
+								"\nactivity: " + gap + 
+								"\n\nPACKETS COUNTED:\n activity: " + counter +
+								"\n\nTotal sended: " + (counter * widget.getIntValue()) + " Byte" +
+								"\n\n PACKET'S RATE [pks/ms]:" +
+								"\nActivity rate: " + (double)(counter/gap));
+		show();
 	}
 }

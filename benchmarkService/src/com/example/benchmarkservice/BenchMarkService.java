@@ -1,5 +1,7 @@
 package com.example.benchmarkservice;
 
+import java.util.Random;
+
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -27,7 +29,7 @@ public class BenchMarkService extends Service{
 	IBenchMarkService.Stub apiEndPoint = new IBenchMarkService.Stub() {
 		
 		private boolean running	= false;
-		private byte[] burst	= new byte[100];
+		private byte[] burst	= new byte[500];
 		private Intent load		= new Intent("com.example.benchmarkactivity.MainActivity");
 		private Thread sender;
 		
@@ -59,6 +61,11 @@ public class BenchMarkService extends Service{
 		@Override
 		public synchronized void setBurstSize(int size) throws RemoteException {
 			burst = new byte[size];
+			Log.e("AIDL", "SETBURST SIZE " + size);
+			Random r = new Random(size);
+			for(int i=0; i<size; i++){
+				burst[i] = (byte)r.nextInt();
+			}
 		}
 
 		@Override

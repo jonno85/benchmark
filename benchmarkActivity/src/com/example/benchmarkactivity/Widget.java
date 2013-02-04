@@ -18,10 +18,10 @@ public class Widget extends LinearLayout {
 	private Button				buttonLeft;
 	private Button				buttonRight;
 	private TextView		 	textValue;
-	private OnProgressListener	progressListener;
 	private ListClickListener	leftClickListeners;
 	private ListClickListener	rightClickListeners;
 	private List<OnTouchListener> registeredListener = new ArrayList<OnTouchListener>();
+	public static final int DEFAULT_INDEX = 4;
 	public static final int values[] = {
 		100, 200, 300, 400, 500, 600, 700, 800, 1000, 1200, 1500, 2000};
 	private int index = 0;
@@ -29,10 +29,6 @@ public class Widget extends LinearLayout {
 /*** PERSONAL CALLBACKS ***/
 	public interface OnProgressListener{
 		public void onChangeProgress(int progress);
-	}
-
-	public void setOnProgressListener(OnProgressListener l){
-		this.progressListener = l;
 	}
 /*** 					***/
 	
@@ -130,7 +126,7 @@ public class Widget extends LinearLayout {
 	
 	public synchronized void setValueByIndex(int index) {
 		this.index = index;
-		textValue.setText(""+values[index]);
+		textValue.setText(""+values[index] + " Byte");
 		//this.progressListener.onChangeProgress(index);
 	}
 
@@ -151,7 +147,27 @@ public class Widget extends LinearLayout {
 		registeredListener.remove(l);
 	}
 
+	public int getIntValue(){
+		return values[index];
+	}
+
 	public String getValue() {
 		return ""+values[index];
+	}
+
+	public int sub() {
+		if(index > 0){
+			--index;
+		}
+		return values[index];
+	}
+
+	public int add() {
+		if(index < values.length - 1){
+			++index;
+		} else {
+			index = values.length-1;
+		}
+		return values[index];
 	}
 }
