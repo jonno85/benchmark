@@ -1,5 +1,10 @@
 package com.example.benchmarkactivity;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.Pipe;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -18,7 +23,8 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.benchmarkservice.IBenchMarkService;
+import com.example.benchmarkservice.*;
+import com.example.benchmarkservice.PipeService.LocalBinder;
 
 public class MainActivity extends Activity {
 
@@ -26,22 +32,39 @@ public class MainActivity extends Activity {
 	private static AIDLConnection	BoundAIDLConnection;
 	private IBenchMarkService		IBenchService;
 	private boolean					state = false;
+	
 	private TextView	textResultService;
 	private Widget		widget;
 	private Button		bStartAIDLService;
 	private Button		bStopAIDLService;
-	private int 		counter = 0;
+	
+	private int 		counter;
 	private Intent		intent;
 	private BReceiver	bcRec;
 	private long		begin, stop;
 	private Handler		handler;
+	
+	private MappedByteBuffer	mem;
+	private Pipe.SourceChannel	sPipe;
+	private PipeService			pipeService;
+	private PipeConnection		pipeConnection;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
 		mapObjectAndListener();
+		/*
+				try {
+			mem = new RandomAccessFile("/mnt/sdcard/mapped.txt", "rw").getChannel().map(FileChannel.MapMode.READ_WRITE, 0, 2000);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
 	}
 
 	@Override
@@ -51,6 +74,11 @@ public class MainActivity extends Activity {
 		BoundAIDLConnection = new AIDLConnection();
 		intent = new Intent("com.example.benchmarkservice.IBenchMarkService");
 		bindService(intent, BoundAIDLConnection, Context.BIND_AUTO_CREATE);
+	
+		pipeConnection = new PipeConnection();
+		intent = new Intent("com.example.benchmarkservice.IPipeService");
+		bindService(intent, pipeConnection, Context.BIND_AUTO_CREATE);
+		
 	}
 
 	@Override
@@ -76,6 +104,7 @@ public class MainActivity extends Activity {
 	protected void onStop() {
 		unregisterReceiver(bcRec);
 		unbindService(BoundAIDLConnection);
+		unbindService(pipeConnection);
 		super.onStop();
 	}
 
@@ -84,6 +113,11 @@ public class MainActivity extends Activity {
 		super.onDestroy();
 	}
 
+	/**
+	 * Class definition to connect on AIDL Service
+	 * @author F31999A
+	 *
+	 */
 	class AIDLConnection implements ServiceConnection{
 
 		@Override
@@ -99,14 +133,46 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	public class BReceiver extends BroadcastReceiver{
+	/**
+	 * Class definition to connect on Pipe binder Service
+	 * @author F31999A
+	 *
+	 */
+	class PipeConnection implements ServiceConnection{
 
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			LocalBinder binder = (LocalBinder) service;
+			pipeService = binder.getService();
+			Log.i("PIPE SERVICE", "CONNECTED");
+			sPipe = PipeService.pipe.source();
+			pipeService.run();
+			ByteBuffer buffer = ByteBuffer.allocate(pipeService.DEFAULT);
+			try {
+				sPipe.read(buffer);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			pipeService = null;
+			Log.i("PIPE SERVICE", "DISCONNECTED");
+		}
+	}
+
+	public class BReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			counter++;
 		}
 	}
 
+	/**
+	 * Initialize all the object from the ContentView and associate 
+	 * their relative listeners
+	 */
 	private void mapObjectAndListener(){
 		widget				= (Widget)	findViewById(R.id.Widget);
 		bStartAIDLService	= (Button)	findViewById(R.id.buttonStartAIDL);
@@ -183,6 +249,9 @@ public class MainActivity extends Activity {
 		});
 	}
 
+	/**
+	 * define and schedule partial data 
+	 */
 	private void show(){
 		if(handler != null){
 			handler.postDelayed(new Runnable() {
@@ -196,7 +265,12 @@ public class MainActivity extends Activity {
 			}, 1000);
 		}
 	}
-	
+
+	/**
+	 * print partial data and reschedule show process
+	 * @param gap
+	 * @param counter
+	 */
 	private void print(double gap, int counter) {
 		textResultService.setText("ELAPSED TIME [ms]:" + 
 								"\nactivity: " + gap + 

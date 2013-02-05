@@ -18,7 +18,7 @@
         android:layout_width="200dp"
         android:layout_height="match_parent"
         android:textStyle="bold"
-        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textAppearance="?android:attr/textAppearanceLarge"
         android:gravity="center_vertical|center_horizontal" 
         />
 
