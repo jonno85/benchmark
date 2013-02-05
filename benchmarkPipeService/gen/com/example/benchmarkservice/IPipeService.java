@@ -56,6 +56,13 @@ reply.writeInt(0);
 }
 return true;
 }
+case TRANSACTION_run:
+{
+data.enforceInterface(DESCRIPTOR);
+this.run();
+reply.writeNoException();
+return true;
+}
 }
 return super.onTransact(code, data, reply, flags);
 }
@@ -96,8 +103,24 @@ _data.recycle();
 }
 return _result;
 }
+@Override public void run() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_run, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
 }
 static final int TRANSACTION_getSourcePipe = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_run = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
 }
 public com.example.benchmarkservice.PipeSourceChannel getSourcePipe() throws android.os.RemoteException;
+public void run() throws android.os.RemoteException;
 }

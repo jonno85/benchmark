@@ -4,4 +4,5 @@ import com.example.benchmarkservice.PipeSourceChannel;
 
 interface IPipeService{
 	PipeSourceChannel getSourcePipe();
+	void run();
 }

@@ -16,13 +16,10 @@ public class PipeSourceChannel extends Pipe{
 
 	public PipeSourceChannel() {
 		super();
-		buffer = ByteBuffer.allocate(PipeService.DEFAULT);
-		try {
-			pipe = open();
-		} catch (IOException e) {
-			Log.e("OPEN PIPE", "PRINT");
-			e.printStackTrace();
-		}
+	}
+	
+	public PipeSourceChannel(Pipe pipe){
+		this.pipe = pipe;
 	}
 
 	public static final Parcelable.Creator<PipeSourceChannel> CREATOR = 
@@ -51,6 +48,6 @@ public class PipeSourceChannel extends Pipe{
 	}
 
 	public void writeToParcel(Parcel reply, int parcelableWriteReturnValue) {
-		reply.writeByteArray(buffer.array());
+		reply.writeParcelable((Parcelable) pipe, 0);
 	}
 }

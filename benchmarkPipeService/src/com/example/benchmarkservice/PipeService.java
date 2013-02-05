@@ -7,35 +7,41 @@ import java.util.Random;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.util.Log;
 
 public class PipeService extends Service {
-
-	private final IBinder mBinder = new LocalBinder();
+	
 	private ByteBuffer buffer;
 	private byte[] burst = new byte[DEFAULT];
-	public static final int DEFAULT = 500;
+	public static final int DEFAULT = 100;
 	public static Pipe pipe;
-	public Pipe.SinkChannel sinkChannel;
-	
-	/**
-     * Class used for the client Binder.  Because we know this service always
-     * runs in the same process as its clients, we don't need to deal with IPC.
-     */
-	public class LocalBinder extends Binder{
-		public PipeService getService(){
-			// Return this instance of BinderService so clients can call 
-			// public and protected methods
-			return PipeService.this;
-		}
-	}
+	private Pipe.SinkChannel sinkChannel;
+	private PipeSourceChannel pipeSourceChannel;
+
+//	public static final int INTERFACE_TRANSACTION = 1598968902;
 
 	@Override
 	public IBinder onBind(Intent intent) {
 		setUp();
-		return mBinder;
+		return apiEndPoint;
+	}
+
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		setUp();
+		run();
+		Pipe.SourceChannel src = pipe.source();
+		ByteBuffer buff2 = ByteBuffer.allocate(100);
+		int read_n = 0;
+		try {
+			read_n = src.read(buff2);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public synchronized void setBurstSize(int size){
@@ -48,8 +54,8 @@ public class PipeService extends Service {
 		try {
 			buffer = ByteBuffer.allocate(DEFAULT);
 			loadRandomData(DEFAULT);
-			pipe		= Pipe.open();
-			sinkChannel	= pipe.sink();
+			pipe = Pipe.open();
+			sinkChannel = pipe.sink();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -68,9 +74,25 @@ public class PipeService extends Service {
 	
 	public void run(){
 		try {
+			Log.e("PIPE SERVICE REMOTE", "start Run");
 			sinkChannel.write(buffer);
 		} catch (IOException e) {
-			e.printStackTrace();
+			Log.e("PIPE SERVICE REMOTE run", "exceptipon");
 		}
 	}
+	
+	IPipeService.Stub apiEndPoint = new IPipeService.Stub(){
+
+		@Override
+		public PipeSourceChannel getSourcePipe() throws RemoteException {
+			pipeSourceChannel = new PipeSourceChannel(pipe);
+			PipeService.this.run();
+			return pipeSourceChannel;
+		}
+
+		@Override
+		public void run() throws RemoteException {
+			PipeService.this.run();
+		}
+	};
 }

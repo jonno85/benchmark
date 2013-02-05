@@ -24,7 +24,6 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.example.benchmarkservice.*;
-import com.example.benchmarkservice.PipeService.LocalBinder;
 
 public class MainActivity extends Activity {
 
@@ -34,9 +33,11 @@ public class MainActivity extends Activity {
 	private boolean					state = false;
 	
 	private TextView	textResultService;
+	private TextView	textResPipeService;
 	private Widget		widget;
 	private Button		bStartAIDLService;
 	private Button		bStopAIDLService;
+	private Button		bStartPipeService;
 	
 	private int 		counter;
 	private Intent		intent;
@@ -46,8 +47,9 @@ public class MainActivity extends Activity {
 	
 	private MappedByteBuffer	mem;
 	private Pipe.SourceChannel	sPipe;
-	private PipeService			pipeService;
+	private IPipeService		pipeService;
 	private PipeConnection		pipeConnection;
+	private ByteBuffer 			buffer;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -142,23 +144,21 @@ public class MainActivity extends Activity {
 
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
-			LocalBinder binder = (LocalBinder) service;
-			pipeService = binder.getService();
-			Log.i("PIPE SERVICE", "CONNECTED");
-			sPipe = PipeService.pipe.source();
-			pipeService.run();
-			ByteBuffer buffer = ByteBuffer.allocate(pipeService.DEFAULT);
+			pipeService = IPipeService.Stub.asInterface(service);
+			Log.e("PIPE SERVICE", "CONNECTED");
+			buffer = ByteBuffer.allocate(100);
 			try {
-				sPipe.read(buffer);
-			} catch (IOException e) {
-				e.printStackTrace();
+				sPipe = pipeService.getSourcePipe().source();
+				Log.e("PIPE SERVICE", "SOURCE PIPE ASSOCIATED");
+			} catch (RemoteException e1) {
+				Log.e("PIPE SERVICE", "GetSourcePipe");
 			}
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			pipeService = null;
-			Log.i("PIPE SERVICE", "DISCONNECTED");
+			Log.e("PIPE SERVICE", "DISCONNECTED");
 		}
 	}
 
@@ -177,7 +177,30 @@ public class MainActivity extends Activity {
 		widget				= (Widget)	findViewById(R.id.Widget);
 		bStartAIDLService	= (Button)	findViewById(R.id.buttonStartAIDL);
 		bStopAIDLService	= (Button)	findViewById(R.id.buttonStopAIDL);
+		bStartPipeService	= (Button)	findViewById(R.id.buttonStartPipe);
 		textResultService	= (TextView)findViewById(R.id.textView1);
+		textResPipeService	= (TextView)findViewById(R.id.textViewPipe);
+
+		bStartPipeService.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				/*
+				try {
+					Log.e("PIPE SERVICE", "start run");
+					//pipeService.run();
+				} catch (RemoteException e1) {
+					Log.e("PIPE SERVICE", "run");
+				}
+				*/
+				try {
+					int n = sPipe.read(buffer);
+					textResPipeService.setText("Get from pipe: " + buffer.array());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 
 		bStartAIDLService.setOnClickListener(new OnClickListener() {
 			
