@@ -6,6 +6,5 @@ interface IBenchMarkService{
 	void startRunning();
 	long stopRunning();
 	void setBurstSize(int size);
-	void setReturnCallback(in IAdvisor advisor);
 	int getNPackets();
 }

@@ -53,10 +53,6 @@ public class BenchMarkService extends Service{
 			}
 			sender.start();
 		}
-
-		@Override
-		public void setReturnCallback(IAdvisor advisor) throws RemoteException {
-		}
 		
 		@Override
 		public synchronized void setBurstSize(int size) throws RemoteException {

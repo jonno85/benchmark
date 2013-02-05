@@ -66,15 +66,6 @@ this.setBurstSize(_arg0);
 reply.writeNoException();
 return true;
 }
-case TRANSACTION_setReturnCallback:
-{
-data.enforceInterface(DESCRIPTOR);
-com.example.benchmarkservice.IAdvisor _arg0;
-_arg0 = com.example.benchmarkservice.IAdvisor.Stub.asInterface(data.readStrongBinder());
-this.setReturnCallback(_arg0);
-reply.writeNoException();
-return true;
-}
 case TRANSACTION_getNPackets:
 {
 data.enforceInterface(DESCRIPTOR);
@@ -147,21 +138,6 @@ _reply.recycle();
 _data.recycle();
 }
 }
-@Override public void setReturnCallback(com.example.benchmarkservice.IAdvisor advisor) throws android.os.RemoteException
-{
-android.os.Parcel _data = android.os.Parcel.obtain();
-android.os.Parcel _reply = android.os.Parcel.obtain();
-try {
-_data.writeInterfaceToken(DESCRIPTOR);
-_data.writeStrongBinder((((advisor!=null))?(advisor.asBinder()):(null)));
-mRemote.transact(Stub.TRANSACTION_setReturnCallback, _data, _reply, 0);
-_reply.readException();
-}
-finally {
-_reply.recycle();
-_data.recycle();
-}
-}
 @Override public int getNPackets() throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
@@ -183,12 +159,10 @@ return _result;
 static final int TRANSACTION_startRunning = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 static final int TRANSACTION_stopRunning = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
 static final int TRANSACTION_setBurstSize = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
-static final int TRANSACTION_setReturnCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
-static final int TRANSACTION_getNPackets = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
+static final int TRANSACTION_getNPackets = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
 }
 public void startRunning() throws android.os.RemoteException;
 public long stopRunning() throws android.os.RemoteException;
 public void setBurstSize(int size) throws android.os.RemoteException;
-public void setReturnCallback(com.example.benchmarkservice.IAdvisor advisor) throws android.os.RemoteException;
 public int getNPackets() throws android.os.RemoteException;
 }
