@@ -1,10 +1,5 @@
 package com.example.benchmarkactivity;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.Pipe;
-
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -21,6 +16,7 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.benchmarkservice.*;
@@ -32,7 +28,10 @@ public class MainActivity extends Activity {
 	private IBenchMarkService		IBenchService;
 	private boolean					state = false;
 	
+	private byte[] buffer;
+	
 	private TextView	textResultService;
+	private TextView	textViewPayload;
 	private Widget		widget;
 	private Button		bStartAIDLService;
 	private Button		bStopAIDLService;
@@ -96,7 +95,6 @@ public class MainActivity extends Activity {
 	 *
 	 */
 	class AIDLConnection implements ServiceConnection{
-
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			IBenchService = IBenchMarkService.Stub.asInterface(service);
@@ -112,6 +110,7 @@ public class MainActivity extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			counter++;
+			writeByteArray(intent.getByteArrayExtra("LOAD"));
 		}
 	}
 
@@ -120,10 +119,12 @@ public class MainActivity extends Activity {
 	 * their relative listeners
 	 */
 	private void mapObjectAndListener(){
-		widget				= (Widget)	findViewById(R.id.Widget);
-		bStartAIDLService	= (Button)	findViewById(R.id.buttonStartAIDL);
-		bStopAIDLService	= (Button)	findViewById(R.id.buttonStopAIDL);
-		textResultService	= (TextView)findViewById(R.id.textView1);
+		widget				= (Widget)		findViewById(R.id.Widget);
+		LinearLayout 	  l = (LinearLayout)findViewById(R.id.layerButtons);
+		bStartAIDLService	= (Button)		l.findViewById(R.id.buttonStartAIDL);
+		bStopAIDLService	= (Button)		l.findViewById(R.id.buttonStopAIDL);
+		textResultService	= (TextView)	findViewById(R.id.textView1);
+		textViewPayload		= (TextView)	findViewById(R.id.textViewPayload);
 
 		bStartAIDLService.setOnClickListener(new OnClickListener() {
 			
@@ -175,7 +176,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				try {
-					IBenchService.setBurstSize(widget.sub());
+					IBenchService.setBurstSize(widget.getIntValue());
 				} catch (RemoteException e) {
 					Log.e("AIDL", "SETBURST SIZE -");
 				}
@@ -187,7 +188,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				try {
-					IBenchService.setBurstSize(widget.add());
+					IBenchService.setBurstSize(widget.getIntValue());
 				} catch (RemoteException e) {
 					Log.e("AIDL", "SETBURST SIZE +");
 				}
@@ -218,12 +219,22 @@ public class MainActivity extends Activity {
 	 * @param counter
 	 */
 	private void print(double gap, int counter) {
-		textResultService.setText("ELAPSED TIME [ms]:" + 
+		if(state){
+			textResultService.setText("ELAPSED TIME [ms]:" + 
 								"\nactivity: " + gap + 
 								"\n\nPACKETS COUNTED:\n activity: " + counter +
 								"\n\nTotal sended: " + (counter * widget.getIntValue()) + " Byte" +
 								"\n\n PACKET'S RATE [pks/ms]:" +
 								"\nActivity rate: " + (double)(counter/gap));
-		show();
+			String s = "";
+			for(int i=0; i<buffer.length; i++)
+				s += (buffer[i] + " | ");
+			textViewPayload.setText("\nsize: " + buffer.length + "\nPayload: " + s);
+			show();
+		}
+	}
+
+	private synchronized void writeByteArray(byte[] bufferIn){
+		buffer = bufferIn.clone();
 	}
 }

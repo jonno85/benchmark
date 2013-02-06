@@ -23,10 +23,10 @@ public class Widget extends LinearLayout {
 	private ListClickListener	leftClickListeners;
 	private ListClickListener	rightClickListeners;
 	private List<OnTouchListener> registeredListener = new ArrayList<OnTouchListener>();
-	public static final int DEFAULT_INDEX = 4;
+	public static final int DEFAULT_INDEX = 0;
 	public static final int values[] = {
-		100, 200, 300, 400, 500, 600, 700, 800, 1000, 1200, 1500, 2000};
-	private int index = 0;
+		100, 300, 400, 500, 600, 700, 800, 1000, 1200, 1300, 1500, 1700, 2000};
+	private int index = DEFAULT_INDEX;
 	
 /*** PERSONAL CALLBACKS ***/
 	public interface OnProgressListener{
@@ -58,7 +58,7 @@ public class Widget extends LinearLayout {
 		textValue	= (TextView)findViewById(R.id.text);
 		buttonRight	= (Button)	findViewById(R.id.IBRight);
 		
-		setValueByIndex(4);
+		setValueByIndex(index);
 	}
 	
 	/**
@@ -71,14 +71,14 @@ public class Widget extends LinearLayout {
 		leftClickListeners.registerClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				setValueByIndex((index == 0)? 0 : --index);
+				sub();
 			}
 		});
 		
 		rightClickListeners.registerClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				setValueByIndex((index < values.length - 1)? ++index : values.length-1);
+				add();
 			}
 		});
 		
@@ -128,8 +128,7 @@ public class Widget extends LinearLayout {
 	
 	public synchronized void setValueByIndex(int index) {
 		this.index = index;
-		textValue.setText(""+values[index] + " Byte");
-		//this.progressListener.onChangeProgress(index);
+		textValue.setText(""+values[this.index] + " Byte");
 	}
 
 	/**
@@ -161,6 +160,8 @@ public class Widget extends LinearLayout {
 		if(index > 0){
 			--index;
 		}
+		textValue.setText(""+values[this.index] + " Byte");
+		Log.e("WIDGET", "" + values[index]);
 		return values[index];
 	}
 
@@ -170,6 +171,8 @@ public class Widget extends LinearLayout {
 		} else {
 			index = values.length-1;
 		}
+		textValue.setText(""+values[this.index] + " Byte");
+		Log.e("WIDGET", "" + values[index]);
 		return values[index];
 	}
 }

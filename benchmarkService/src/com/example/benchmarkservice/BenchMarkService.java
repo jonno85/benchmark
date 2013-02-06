@@ -10,7 +10,7 @@ import android.util.Log;
 
 public class BenchMarkService extends Service{
 
-	private static final String TAG = "LOAD";
+	public static final String TAG = "LOAD";
 	private long start, stop;
 	private int counter = 0;
 
@@ -29,8 +29,8 @@ public class BenchMarkService extends Service{
 	IBenchMarkService.Stub apiEndPoint = new IBenchMarkService.Stub() {
 		
 		private boolean running	= false;
-		private byte[] burst	= new byte[500];
-		private Intent load		= new Intent("com.example.benchmarkactivity.MainActivity");
+		private byte[] burst	= new byte[100];
+		private Intent load;
 		private Thread sender;
 		
 		private void stopSender() {
@@ -56,18 +56,16 @@ public class BenchMarkService extends Service{
 		
 		@Override
 		public synchronized void setBurstSize(int size) throws RemoteException {
+			burst = null;
 			burst = new byte[size];
 			Log.e("AIDL", "SETBURST SIZE " + size);
-			Random r = new Random(size);
-			for(int i=0; i<size; i++){
-				burst[i] = (byte)r.nextInt();
-			}
+			load = getNewIntent();
 		}
 
 		@Override
 		public void startRunning() throws RemoteException {
 			this.running = true;
-			load.putExtra(TAG, burst);
+			load = getNewIntent();
 			start = System.currentTimeMillis();
 			startSender();
 		}
@@ -83,6 +81,20 @@ public class BenchMarkService extends Service{
 		@Override
 		public int getNPackets() throws RemoteException {
 			return counter;
+		}
+
+		private Intent getNewIntent(){
+			Intent i = new Intent("com.example.benchmarkactivity.MainActivity");
+			i.putExtra(TAG, burst);
+			putPayLoad(burst.length);
+			return i;
+		}
+		
+		private void putPayLoad(int size){
+			Random r = new Random(size);
+			for(int i=0; i<size; i++){
+				burst[i] = (byte)r.nextInt();
+			}
 		}
 	};
 }
