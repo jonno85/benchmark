@@ -155,6 +155,7 @@ public class MainActivity extends Activity {
 						stop = System.currentTimeMillis();
 						state = false;
 						handler = null;
+						int loss = (IBenchService.getNPackets() - counter);
 						double gap = stop - begin;
 						textResultService.setText("ELAPSED TIME [ms]:\nservice: " + servDiff + 
 												"\nactivity: " + gap + 
@@ -164,7 +165,8 @@ public class MainActivity extends Activity {
 												"\n\n PACKET'S RATE [pks/ms]:" +
 												"\nActivity rate: " + (double)(counter/gap) + 
 												"\nService rate: " + (double)(IBenchService.getNPackets()/servDiff) +
-												"\nPackets loss: " + (IBenchService.getNPackets() - counter));
+												"\nPackets loss [n]: " + loss +
+												((loss > 0)? "\nPackets loss rate [n/ms]: "+ (loss/gap) : "" ));
 					} catch(RemoteException e){
 						Log.e("AIDL", "STOP SEND ERROR");
 					}
