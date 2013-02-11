@@ -163,7 +163,8 @@ public class MainActivity extends Activity {
 												"\n\nTotal sended: " + (counter * widget.getIntValue()) + " Byte" +
 												"\n\n PACKET'S RATE [pks/ms]:" +
 												"\nActivity rate: " + (double)(counter/gap) + 
-												"\nService rate: " + (double)(IBenchService.getNPackets()/servDiff));
+												"\nService rate: " + (double)(IBenchService.getNPackets()/servDiff) +
+												"\nPackets loss: " + (IBenchService.getNPackets() - counter));
 					} catch(RemoteException e){
 						Log.e("AIDL", "STOP SEND ERROR");
 					}
