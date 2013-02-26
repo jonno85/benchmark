@@ -54,6 +54,7 @@ containing a value of this type.
         public static final int down=0x7f040009;
         public static final int hello_world=0x7f040001;
         public static final int menu_settings=0x7f040002;
+        public static final int selectSource=0x7f04000a;
         public static final int start=0x7f040004;
         public static final int stop=0x7f040005;
         public static final int tByte=0x7f040003;
