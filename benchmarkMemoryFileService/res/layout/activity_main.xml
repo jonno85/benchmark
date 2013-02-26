@@ -1,0 +1,22 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center_horizontal|center_vertical|clip_horizontal"
+    android:orientation="vertical" >
+    
+    <TextView 
+        android:id="@+id/text1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+    <TextView 
+        android:id="@+id/text2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+    <TextView 
+        android:id="@+id/text3"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+    
+</LinearLayout>

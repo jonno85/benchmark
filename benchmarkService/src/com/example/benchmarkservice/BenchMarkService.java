@@ -32,6 +32,7 @@ public class BenchMarkService extends Service{
 		private byte[] burst	= new byte[100];
 		private Intent load;
 		private Thread sender;
+		private IActivityListener listener;
 		
 		private void stopSender() {
 			sender = null;
@@ -53,12 +54,12 @@ public class BenchMarkService extends Service{
 			}
 			sender.start();
 		}
-		
+
 		@Override
 		public synchronized void setBurstSize(int size) throws RemoteException {
 			burst = null;
 			burst = new byte[size];
-			Log.e("AIDL", "SETBURST SIZE " + size);
+//			Log.e("AIDL", "SETBURST SIZE " + size);
 			load = getNewIntent();
 		}
 
@@ -95,6 +96,51 @@ public class BenchMarkService extends Service{
 			for(int i=0; i<size; i++){
 				burst[i] = (byte)r.nextInt();
 			}
+		}
+
+		@Override
+		public byte[] getOneShotPacket() throws RemoteException {
+			return burst;
+		}
+
+		@Override
+		public void bindClientListener(IActivityListener listener)
+				throws RemoteException {
+			this.listener = listener;
+		}
+
+		@Override
+		public boolean setOneShotPacketSize(int size) throws RemoteException {
+			if(size < 1)
+				return false;
+			burst = new byte[size];
+			putPayLoad(size);
+			return true;
+		}
+
+		@Override
+		public void startListenerRunning() throws RemoteException {
+			sender = null;
+			counter = 0;
+			this.running = true;
+			Log.e("AIDL", "startListenerRunning");
+			sender = new Thread(new Runnable() {
+				
+				@Override
+				public void run() {
+					while(running){
+						try {
+							Log.e("AIDL", "onReadyValue");
+							listener.onReadyValue(burst);
+							counter++;
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			});
+			Log.e("AIDL", "start");
+			sender.start();
 		}
 	};
 }
