@@ -14,4 +14,10 @@
     <string name="down">down</string>
 
     <string name="selectSource">select Source</string>
+	
+	<!-- Graphic widget -->
+	<string name="graphic_update_interval">Update interval</string> 
+	<string name="graphic_paused">Graphic paused</string> 
+	<string name="graphic_recording">Recording...</string> 
+
 </resources>

@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import android.R.color;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -20,6 +21,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -41,14 +43,25 @@ public class MainActivity extends Activity {
 	/**
 	 * Statistics
 	 */
+	private float	rate;
+	private long 	counter, begin, stop, gap, loss;
+	
+	/**
+	 * CPU Statistics
+	 */
 	private long work, workAM, total;
 	private long workBefore, totalBefore, workAMBefore;
 	private RandomAccessFile reader;
 	
-	private long	loss;
-	private long	gap;
-	private float	rate;
-//	private long	servGap;
+	/**
+	 * Graphic widget
+	 */
+	static int WIDTH_INTERVAL = 1;
+	static int READ_INTERVAL, UPDATE_INTERVAL;
+	static boolean HAPPYICONS, MEMFREE_R, BUFFERS_R, CACHED_R, ACTIVE_R, INACTIVE_R, SWAPTOTAL_R, DIRTY_R, CPUP_R, CPUTOTALP_R, CPUAMP_R, CPURESTP_R, 
+			DRAW, MEMFREE_D, BUFFERS_D, CACHED_D, ACTIVE_D, INACTIVE_D, SWAPTOTAL_D, DIRTY_D, CPUTOTALP_D, CPUAMP_D, CPURESTP_D, RECORD;
+	static int TOTAL_INTERVALS = 100; // Default value to initialice the vector. Afterwards will be modified automatically.
+	private AnGraphic graphWidget;
 	
 	//Service Variables
 	private static AIDLConnection	BoundAIDLConnection;
@@ -69,17 +82,19 @@ public class MainActivity extends Activity {
 	private RadioButton		rbPriority1;
 	private RadioButton		rbPriority2;
 	private RadioButton		rbPriority3;
-	
-	private long 		counter;
+
 	private Intent		intent;
 	private BReceiver	bcRec;
-	private long		begin, stop;
 	private Handler		handler;
 	
+	/**
+	 * Serialize variables
+	 */
 	private ObjectOutputStream	oos;
 	private ObjectInputStream	ois;
 	private String statFile;
 	private HashMap<Integer, HashMap<String, LinkedList<DataContainer>>> stats;
+	
 	private int mode = 0; //contain which mode used to evaluate benchmark
 	
 	private IActivityListener.Stub iListener = new IActivityListener.Stub(){
@@ -195,6 +210,7 @@ public class MainActivity extends Activity {
 		l					= (LinearLayout)findViewById(R.id.layerTexts);
 		textResultService	= (TextView)	l.findViewById(R.id.textView1);
 		textResultStats		= (TextView)	l.findViewById(R.id.textView2);
+		graphWidget			= (AnGraphic)	l.findViewById(R.id.graphWidget);
 		l					= (LinearLayout)findViewById(R.id.layerPayload);
 		textViewPayload		= (TextView)	l.findViewById(R.id.textViewPayload);
 

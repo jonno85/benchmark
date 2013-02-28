@@ -9,6 +9,15 @@ package com.example.benchmarkactivity;
 
 public final class R {
     public static final class attr {
+        /** <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
+"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int graph_background=0x7f010001;
         /** <p>Must be an integer value, such as "<code>100</code>".
 <p>This may also be a reference to a resource (in the form
 "<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
@@ -17,6 +26,32 @@ theme attribute (in the form
 containing a value of this type.
          */
         public static final int initValue=0x7f010000;
+        /** <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
+"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int lines_color=0x7f010003;
+        /** <p>Must be an integer value, such as "<code>100</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int text_size=0x7f010004;
+        /** <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
+"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int view_background=0x7f010002;
     }
     public static final class drawable {
         public static final int ic_launcher=0x7f020000;
@@ -28,27 +63,28 @@ containing a value of this type.
         public static final int shadow=0x7f020006;
     }
     public static final class id {
-        public static final int IBLeft=0x7f070011;
-        public static final int IBRight=0x7f070013;
+        public static final int IBLeft=0x7f070012;
+        public static final int IBRight=0x7f070014;
         public static final int LinearLayout1=0x7f070000;
-        public static final int RelativeLayout1=0x7f070010;
+        public static final int RelativeLayout1=0x7f070011;
         public static final int Widget=0x7f070002;
         public static final int buttonStartAIDL=0x7f070009;
         public static final int buttonStopAIDL=0x7f07000a;
+        public static final int graphWidget=0x7f07000e;
         public static final int layerButtons=0x7f070008;
-        public static final int layerPayload=0x7f07000e;
+        public static final int layerPayload=0x7f07000f;
         public static final int layerTexts=0x7f07000b;
         public static final int layerwidget=0x7f070001;
-        public static final int menu_settings=0x7f070014;
+        public static final int menu_settings=0x7f070015;
         public static final int priority0=0x7f070004;
         public static final int priority1=0x7f070005;
         public static final int priority2=0x7f070006;
         public static final int priority3=0x7f070007;
         public static final int radioGroup1=0x7f070003;
-        public static final int text=0x7f070012;
+        public static final int text=0x7f070013;
         public static final int textView1=0x7f07000c;
         public static final int textView2=0x7f07000d;
-        public static final int textViewPayload=0x7f07000f;
+        public static final int textViewPayload=0x7f070010;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
@@ -61,6 +97,11 @@ containing a value of this type.
         public static final int app_name=0x7f040000;
         public static final int counter=0x7f040007;
         public static final int down=0x7f040009;
+        public static final int graphic_paused=0x7f04000c;
+        public static final int graphic_recording=0x7f04000d;
+        /**  Graphic widget 
+         */
+        public static final int graphic_update_interval=0x7f04000b;
         public static final int hello_world=0x7f040001;
         public static final int menu_settings=0x7f040002;
         public static final int selectSource=0x7f04000a;
@@ -99,6 +140,84 @@ containing a value of this type.
         public static final int AppTheme=0x7f050001;
     }
     public static final class styleable {
+        /** Attributes that can be used with a graph.
+           <p>Includes the following attributes:</p>
+           <table>
+           <colgroup align="left" />
+           <colgroup align="left" />
+           <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #graph_graph_background com.example.benchmarkactivity:graph_background}</code></td><td></td></tr>
+           <tr><td><code>{@link #graph_lines_color com.example.benchmarkactivity:lines_color}</code></td><td></td></tr>
+           <tr><td><code>{@link #graph_text_size com.example.benchmarkactivity:text_size}</code></td><td></td></tr>
+           <tr><td><code>{@link #graph_view_background com.example.benchmarkactivity:view_background}</code></td><td></td></tr>
+           </table>
+           @see #graph_graph_background
+           @see #graph_lines_color
+           @see #graph_text_size
+           @see #graph_view_background
+         */
+        public static final int[] graph = {
+            0x7f010001, 0x7f010002, 0x7f010003, 0x7f010004
+        };
+        /**
+          <p>This symbol is the offset where the {@link com.example.benchmarkactivity.R.attr#graph_background}
+          attribute's value can be found in the {@link #graph} array.
+
+
+          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
+"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:graph_background
+        */
+        public static final int graph_graph_background = 0;
+        /**
+          <p>This symbol is the offset where the {@link com.example.benchmarkactivity.R.attr#lines_color}
+          attribute's value can be found in the {@link #graph} array.
+
+
+          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
+"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:lines_color
+        */
+        public static final int graph_lines_color = 2;
+        /**
+          <p>This symbol is the offset where the {@link com.example.benchmarkactivity.R.attr#text_size}
+          attribute's value can be found in the {@link #graph} array.
+
+
+          <p>Must be an integer value, such as "<code>100</code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:text_size
+        */
+        public static final int graph_text_size = 3;
+        /**
+          <p>This symbol is the offset where the {@link com.example.benchmarkactivity.R.attr#view_background}
+          attribute's value can be found in the {@link #graph} array.
+
+
+          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
+"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:view_background
+        */
+        public static final int graph_view_background = 1;
         /** Attributes that can be used with a widget.
            <p>Includes the following attributes:</p>
            <table>
