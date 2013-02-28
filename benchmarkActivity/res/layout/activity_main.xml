@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center_horizontal|center_vertical|clip_horizontal"
+    android:gravity="right"
     android:orientation="vertical"
     tools:context=".MainActivity" >
 
@@ -13,17 +14,44 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal" >
 
-        <ToggleButton
-            android:id="@+id/toggleButton1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="+ Priority" />
-
         <com.example.benchmarkactivity.Widget
             android:id="@+id/Widget"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="right" />
+            android:layout_gravity="right"
+            android:gravity="right" >
+        </com.example.benchmarkactivity.Widget>
+
+        <RadioGroup
+            android:id="@+id/radioGroup1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <RadioButton
+                android:id="@+id/priority0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Default 0" />
+
+            <RadioButton
+                android:id="@+id/priority1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MORE_FAVORABLE -1" />
+
+            <RadioButton
+                android:id="@+id/priority2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PRIORITY_FOREGROUND -2" />
+
+            <RadioButton
+                android:id="@+id/priority3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PRIORITY_DISPLAY -4" />
+        </RadioGroup>
 
     </LinearLayout>
 
@@ -42,42 +70,46 @@
         <Button
             android:id="@+id/buttonStopAIDL"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/stop" />
     </LinearLayout>
-		<LinearLayout 
-		    android:orientation="horizontal"
-		    android:id="@+id/layerTexts"
+
+    <LinearLayout
+        android:id="@+id/layerTexts"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
-		    
-		    <TextView
-	        android:id="@+id/textView1"
-	        android:layout_width="0dp"
-	        android:layout_height="wrap_content"
-	        android:layout_gravity="left"
-	        android:layout_weight="1"
-	        android:text="@string/time" />
-		    
-		    <TextView
-	        android:id="@+id/textView2"
-	        android:layout_width="0dp"
-	        android:layout_height="wrap_content"
-	        android:layout_gravity="right"
-	        android:layout_weight="1" />
-		</LinearLayout>
-		<LinearLayout 
-		    android:orientation="horizontal"
-		    android:id="@+id/layerPayload"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:layout_weight="1"
+            android:text="@string/time" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="AVG:" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layerPayload"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
-		
-		    <TextView
-		        android:id="@+id/textViewPayload"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:scrollHorizontally="true"
-		        android:text="Payload: " />
-		</LinearLayout>
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/textViewPayload"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scrollHorizontally="true"
+            android:text="Payload: " />
+    </LinearLayout>
+
 </LinearLayout>

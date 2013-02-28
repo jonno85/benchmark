@@ -2,6 +2,7 @@ package com.example.benchmarkactivity;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -20,8 +21,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.Debug;
-import android.os.Debug.MemoryInfo;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -30,21 +29,26 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import com.example.benchmarkservice.IActivityListener;
 import com.example.benchmarkservice.IBenchMarkService;
 
 public class MainActivity extends Activity {
 
-	private int		loss;
+	/**
+	 * Statistics
+	 */
+	private long work, workAM, total;
+	private long workBefore, totalBefore, workAMBefore;
+	private RandomAccessFile reader;
+	
+	private long	loss;
 	private long	gap;
 	private float	rate;
-	private long	servGap;
+//	private long	servGap;
 	
 	//Service Variables
 	private static AIDLConnection	BoundAIDLConnection;
@@ -61,7 +65,10 @@ public class MainActivity extends Activity {
 	private Widget			widget;
 	private Button			bStartAIDLService;
 	private Button			bStopAIDLService;
-	private ToggleButton	bPriority;
+	private RadioButton		rbPriority0;
+	private RadioButton		rbPriority1;
+	private RadioButton		rbPriority2;
+	private RadioButton		rbPriority3;
 	
 	private long 		counter;
 	private Intent		intent;
@@ -71,9 +78,9 @@ public class MainActivity extends Activity {
 	
 	private ObjectOutputStream	oos;
 	private ObjectInputStream	ois;
-	private static final String FILE = "./statistics";
+	private String statFile;
 	private HashMap<Integer, HashMap<String, LinkedList<DataContainer>>> stats;
-	private int mode; //contain which mode used to evaluate benchmark
+	private int mode = 0; //contain which mode used to evaluate benchmark
 	
 	private IActivityListener.Stub iListener = new IActivityListener.Stub(){
 		@Override
@@ -90,6 +97,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		statFile = getFilesDir().getPath().toString() + "/statistics";
 		setContentView(R.layout.activity_main);
 		setAndRestore();
 		mapObjectAndListener();
@@ -135,12 +143,14 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		try {
+			oos = new ObjectOutputStream(new FileOutputStream(statFile));
 			oos.writeObject(stats);
 			oos.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			super.onDestroy();
 		}
-		super.onDestroy();
 	}
 
 	/**
@@ -175,7 +185,10 @@ public class MainActivity extends Activity {
 	private void mapObjectAndListener(){
 		LinearLayout l = (LinearLayout)findViewById(R.id.layerwidget);
 		widget				= (Widget)		l.findViewById(R.id.Widget);
-		bPriority			= (ToggleButton)l.findViewById(R.id.toggleButton1);
+		rbPriority0			= (RadioButton)	l.findViewById(R.id.priority0);
+		rbPriority1			= (RadioButton)	l.findViewById(R.id.priority1);
+		rbPriority2			= (RadioButton)	l.findViewById(R.id.priority2);
+		rbPriority3			= (RadioButton)	l.findViewById(R.id.priority3);
 		l					= (LinearLayout)findViewById(R.id.layerButtons);
 		bStartAIDLService	= (Button)		l.findViewById(R.id.buttonStartAIDL);
 		bStopAIDLService	= (Button)		l.findViewById(R.id.buttonStopAIDL);
@@ -185,12 +198,15 @@ public class MainActivity extends Activity {
 		l					= (LinearLayout)findViewById(R.id.layerPayload);
 		textViewPayload		= (TextView)	l.findViewById(R.id.textViewPayload);
 
+		rbPriority0.setChecked(true);
+		
 		bStartAIDLService.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
 				if(!state){
-					rate = gap = stop = counter = servGap = loss = 0;
+					rate = gap = stop = counter = 0;
+					loss = 0;
 					showChoices();
 				}
 			}
@@ -202,23 +218,25 @@ public class MainActivity extends Activity {
 			public void onClick(View v) {
 				if(state){
 					try{
-						servGap = IBenchService.stopRunning();
+//						servGap = 
+						IBenchService.stopRunning();
 						stop	= System.currentTimeMillis();
 						state	= false;
 						handler	= null;
-						loss	= (int) (IBenchService.getNPackets() - counter);
+						loss	= (IBenchService.getNPackets() - counter);
+						loss	= (loss>0)? loss : 0;
 						gap		= stop - begin;
 						rate	= ((float)counter)/((float)gap);
 						textResultService.setText("ELAPSED TIME ["+unit+"]:" +
 												"\nactivity: " + gap + 
-												"\nservice: " + servGap + 
+//												"\nservice: " + servGap + 
 												"\n\nPACKETS COUNTED:" +
 												"\nactivity: " + counter +
 												"\nservice: " + IBenchService.getNPackets() +
 												"\n\nTotal sended: " + ((counter * widget.getIntValue())/1024) + " KByte" +
 												"\n\n PACKET'S RATE [pks/"+unit+"]:" +
 												"\nActivity rate: " + rate + 
-												"\nService rate: " + (float)(IBenchService.getNPackets()/servGap) +
+//												"\nService rate: " + (float)(IBenchService.getNPackets()/servGap) +
 												"\nPackets loss [n]: " + loss +
 												((loss > 0)? "\nPackets loss rate [n/"+unit+"]: "+ (float)(loss/gap) : "" ));
 						saveStatElement();
@@ -253,23 +271,47 @@ public class MainActivity extends Activity {
 			}
 		});
 
-		bPriority.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+		setRadioButtonListener();
+	}
+
+	private void setRadioButtonListener() {
+		rbPriority0.setOnClickListener(new OnClickListener() {
 			
 			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				if(isChecked){
-					android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE);
-				} else {
-					android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
-				}
+			public void onClick(View v) {
+				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+			}
+		});
+		
+		rbPriority1.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE);
+			}
+		});
+		
+		rbPriority2.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND);
+			}
+		});
+		
+		rbPriority3.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY);
 			}
 		});
 	}
 
-	
+	@SuppressWarnings("unchecked")
 	public void setAndRestore(){
 		try {
-			ois = new ObjectInputStream(new FileInputStream(FILE));
+			ois = new ObjectInputStream(new FileInputStream(statFile));
 			stats = (HashMap<Integer, HashMap<String, LinkedList<DataContainer>>>) ois.readObject();
 		} catch (ClassNotFoundException ex) {
 			initStats();
@@ -294,43 +336,79 @@ public class MainActivity extends Activity {
 	}
 
 	private void saveStatElement(){
+		float avgRate		= 0;
+		float avgPackets	= 0;
+		float avgLoss		= 0;
+		
 		HashMap<String, LinkedList<DataContainer>> map = stats.get(widget.getIntValue());
 		LinkedList<DataContainer> list = map.get(sourcesItems[mode]);
-		float avg = 0;
+
 		Iterator<DataContainer> i = list.iterator();
-		int index=0;
+		float index=0;
 		while(i.hasNext()){
-			avg += i.next().getRate();
+			DataContainer c = i.next();
+			avgRate		+= c.getRate();
+			avgPackets	+= c.getPackets();
+			avgLoss		+= c.getLoss();
 			index++;
 		}
-//		avg /= index;
+		avgRate		/= index;
+		avgPackets	/= index;
+		avgLoss		/= index;
 		
-		MemoryInfo info = new MemoryInfo();
-		Debug.getMemoryInfo(info);
 		
-		list.add(new DataContainer(gap,counter,rate,avg,loss,getCpuUsage(),Debug.getPss()));
-		textResultStats.setText("Avg: " + avg +
+//		MemoryInfo info = new MemoryInfo();
+//		Debug.getMemoryInfo(info);
+		Log.e("SAVED", "gap "+gap + " counter " + counter +" rate " + rate + " avg " + avgRate +" loss " + loss + " getCpuUsage() " +getCpuUsage());
+		list.add(new DataContainer(gap, counter, rate, avgRate, loss, getCpuUsage()));
+		textResultStats.setText("AVG (Set "+index+"):" +
+								"\nRate: " 		+ avgRate		+
+								"\nPackets: "	+ avgPackets	+
+								"\nLost: "		+ avgLoss		+ 
 								"\ncpu usage: " + getCpuUsage() + " clock ticks " +
-								"\nmemory usage: " + (info.nativePrivateDirty) + 
+//								"\nmemory usage: " + (info.nativePrivateDirty) + 
 								"\npriority: " + android.os.Process.getThreadPriority(android.os.Process.myTid()));
 	}
 
 	private long getCpuUsage(){
-
+		String[] tok;
+		long workT	 = 0;
+		long totalT	 = 0;
+		long workAMT = 0;
 		try {
-			RandomAccessFile reader = new RandomAccessFile("/proc/"+android.os.Process.myPid()+"/stat", "r");
+			reader = new RandomAccessFile("/proc/stat","r");
+			tok = reader.readLine().split("[ ]+", 9);
 			
-			String load = reader.readLine();
-
-			String[] toks = load.split(" ");
-
-			long userScheduled		= Long.parseLong(toks[13]);
-			long kernelScheduled	= Long.parseLong(toks[14]);
-			return userScheduled+kernelScheduled;
+			work	= Long.parseLong(tok[1]) +
+					  Long.parseLong(tok[2]) +
+					  Long.parseLong(tok[3]);
+			total	= work +
+					  Long.parseLong(tok[4]) +
+					  Long.parseLong(tok[5]) +
+					  Long.parseLong(tok[6]) +
+					  Long.parseLong(tok[7]);
+			
+			reader = new RandomAccessFile("/proc/"+android.os.Process.myPid()+"/stat","r");
+			tok = reader.readLine().split("[ ]+", 18);
+			
+			workAM	= Long.parseLong(tok[13]) +
+					  Long.parseLong(tok[14]) +
+					  Long.parseLong(tok[15]) +
+					  Long.parseLong(tok[16]);
+			if(totalBefore != 0){
+				workT	= work - workBefore;
+				totalT	= total - totalBefore;
+				workAMT	= workAM - workAMBefore;
+			}
+			workBefore = work;
+			totalBefore = total;
+			workAMBefore = workAM;
+			Log.e("SAVED", "workT "+workT + " totalT " + totalT +" workAMT " + workAMT + " workAM " + workAM);
+			
+			return workAMT;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return 0;
@@ -342,7 +420,7 @@ public class MainActivity extends Activity {
 	protected void showChoices() {
 		new AlertDialog.Builder(MainActivity.this)
 		.setTitle(R.string.selectSource)
-		.setSingleChoiceItems(sourcesItems, 0, new DialogInterface.OnClickListener() {
+		.setSingleChoiceItems(sourcesItems, mode, new DialogInterface.OnClickListener() {
 										@Override
 										public void onClick(DialogInterface dialog, int which) {}})
 		.setPositiveButton("go", yesListener)
