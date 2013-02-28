@@ -5,10 +5,10 @@ import com.example.benchmarkservice.IActivityListener;
 interface IBenchMarkService{
 	void startRunning();
 	long stopRunning();
-	void setBurstSize(int size);
-	int getNPackets();
+	void setBurstSize(in int size);
+	long getNPackets();
 	
-	boolean setOneShotPacketSize(int size);
+	boolean setOneShotPacketSize(in int size);
 	byte[] getOneShotPacket();
 
 	void startListenerRunning();

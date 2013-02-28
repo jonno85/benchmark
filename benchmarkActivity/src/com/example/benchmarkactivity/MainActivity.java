@@ -1,5 +1,15 @@
 package com.example.benchmarkactivity;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.RandomAccessFile;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -10,6 +20,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Debug;
+import android.os.Debug.MemoryInfo;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -18,41 +30,57 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.example.benchmarkservice.IActivityListener;
 import com.example.benchmarkservice.IBenchMarkService;
 
 public class MainActivity extends Activity {
 
+	private int		loss;
+	private long	gap;
+	private float	rate;
+	private long	servGap;
+	
 	//Service Variables
 	private static AIDLConnection	BoundAIDLConnection;
 	private IBenchMarkService		IBenchService;
 	private boolean					state = false;
 	
 	private byte[] buffer;
-	private static int N_PACKETS = 10000;
+	private String opts, s, unit;
+	private static int N_PACKETS = 5000;
 	
-	private TextView	textResultService;
-	private TextView	textViewPayload;
-	private Widget		widget;
-	private Button		bStartAIDLService;
-	private Button		bStopAIDLService;
+	private TextView		textResultService;
+	private TextView		textResultStats;
+	private TextView		textViewPayload;
+	private Widget			widget;
+	private Button			bStartAIDLService;
+	private Button			bStopAIDLService;
+	private ToggleButton	bPriority;
 	
 	private long 		counter;
 	private Intent		intent;
 	private BReceiver	bcRec;
 	private long		begin, stop;
 	private Handler		handler;
-
+	
+	private ObjectOutputStream	oos;
+	private ObjectInputStream	ois;
+	private static final String FILE = "./statistics";
+	private HashMap<Integer, HashMap<String, LinkedList<DataContainer>>> stats;
+	private int mode; //contain which mode used to evaluate benchmark
+	
 	private IActivityListener.Stub iListener = new IActivityListener.Stub(){
 		@Override
 		public void onReadyValue(byte[] load) throws RemoteException {
-			buffer = load;
+			buffer = load.clone();
 			counter++;
-			if(counter%N_PACKETS == 0)
+			if(counter % N_PACKETS == 0)
 				UpdateTextView();
 		}
 	};
@@ -63,7 +91,10 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		setAndRestore();
 		mapObjectAndListener();
+
+//		ActivityManager manager = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
 	}
 
 	@Override
@@ -103,6 +134,12 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onDestroy() {
+		try {
+			oos.writeObject(stats);
+			oos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		super.onDestroy();
 	}
 
@@ -136,46 +173,55 @@ public class MainActivity extends Activity {
 	 * their relative listeners
 	 */
 	private void mapObjectAndListener(){
-		widget				= (Widget)		findViewById(R.id.Widget);
-		LinearLayout	  l = (LinearLayout)findViewById(R.id.layerButtons);
+		LinearLayout l = (LinearLayout)findViewById(R.id.layerwidget);
+		widget				= (Widget)		l.findViewById(R.id.Widget);
+		bPriority			= (ToggleButton)l.findViewById(R.id.toggleButton1);
+		l					= (LinearLayout)findViewById(R.id.layerButtons);
 		bStartAIDLService	= (Button)		l.findViewById(R.id.buttonStartAIDL);
 		bStopAIDLService	= (Button)		l.findViewById(R.id.buttonStopAIDL);
-		textResultService	= (TextView)	findViewById(R.id.textView1);
-		textViewPayload		= (TextView)	findViewById(R.id.textViewPayload);
+		l					= (LinearLayout)findViewById(R.id.layerTexts);
+		textResultService	= (TextView)	l.findViewById(R.id.textView1);
+		textResultStats		= (TextView)	l.findViewById(R.id.textView2);
+		l					= (LinearLayout)findViewById(R.id.layerPayload);
+		textViewPayload		= (TextView)	l.findViewById(R.id.textViewPayload);
 
 		bStartAIDLService.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
 				if(!state){
-					begin = stop = counter = 0;
+					rate = gap = stop = counter = servGap = loss = 0;
 					showChoices();
 				}
 			}
 		});
 		
 		bStopAIDLService.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				if(state){
 					try{
-						double servDiff = IBenchService.stopRunning();
-						stop = System.nanoTime();
-						state = false;
-						handler = null;
-						int loss = (int) (IBenchService.getNPackets() - counter);
-						double gap = stop - begin;
-						textResultService.setText("ELAPSED TIME [ns]:\nservice: " + servDiff + 
+						servGap = IBenchService.stopRunning();
+						stop	= System.currentTimeMillis();
+						state	= false;
+						handler	= null;
+						loss	= (int) (IBenchService.getNPackets() - counter);
+						gap		= stop - begin;
+						rate	= ((float)counter)/((float)gap);
+						textResultService.setText("ELAPSED TIME ["+unit+"]:" +
 												"\nactivity: " + gap + 
-												"\n\nPACKETS COUNTED:\n activity: " + counter +
+												"\nservice: " + servGap + 
+												"\n\nPACKETS COUNTED:" +
+												"\nactivity: " + counter +
 												"\nservice: " + IBenchService.getNPackets() +
-												"\n\nTotal sended: " + (counter * widget.getIntValue()) + " Byte" +
-												"\n\n PACKET'S RATE [pks/ns]:" +
-												"\nActivity rate: " + (double)(counter/gap) + 
-												"\nService rate: " + (double)(IBenchService.getNPackets()/servDiff) +
+												"\n\nTotal sended: " + ((counter * widget.getIntValue())/1024) + " KByte" +
+												"\n\n PACKET'S RATE [pks/"+unit+"]:" +
+												"\nActivity rate: " + rate + 
+												"\nService rate: " + (float)(IBenchService.getNPackets()/servGap) +
 												"\nPackets loss [n]: " + loss +
-												((loss > 0)? "\nPackets loss rate [n/ns]: "+ (loss/gap) : "" ));
+												((loss > 0)? "\nPackets loss rate [n/"+unit+"]: "+ (float)(loss/gap) : "" ));
+						saveStatElement();
 					} catch(RemoteException e){
 						Log.e("AIDL", "STOP SEND ERROR");
 					}
@@ -206,8 +252,93 @@ public class MainActivity extends Activity {
 				}
 			}
 		});
+
+		bPriority.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				if(isChecked){
+					android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE);
+				} else {
+					android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+				}
+			}
+		});
 	}
 
+	
+	public void setAndRestore(){
+		try {
+			ois = new ObjectInputStream(new FileInputStream(FILE));
+			stats = (HashMap<Integer, HashMap<String, LinkedList<DataContainer>>>) ois.readObject();
+		} catch (ClassNotFoundException ex) {
+			initStats();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(stats == null)
+			initStats();
+	}
+
+	private void initStats(){
+		stats = new HashMap<Integer, HashMap<String,LinkedList<DataContainer>>>();
+		for(int i=0; i<Widget.values.length; i++){
+			HashMap<String, LinkedList<DataContainer>> subMap = new HashMap<String, LinkedList<DataContainer>>(3);
+			for(int j=0; j<sourcesItems.length; j++){
+				subMap.put(sourcesItems[j], new LinkedList<DataContainer>());
+			}
+			stats.put(Widget.values[i], subMap);
+		}
+	}
+
+	private void saveStatElement(){
+		HashMap<String, LinkedList<DataContainer>> map = stats.get(widget.getIntValue());
+		LinkedList<DataContainer> list = map.get(sourcesItems[mode]);
+		float avg = 0;
+		Iterator<DataContainer> i = list.iterator();
+		int index=0;
+		while(i.hasNext()){
+			avg += i.next().getRate();
+			index++;
+		}
+//		avg /= index;
+		
+		MemoryInfo info = new MemoryInfo();
+		Debug.getMemoryInfo(info);
+		
+		list.add(new DataContainer(gap,counter,rate,avg,loss,getCpuUsage(),Debug.getPss()));
+		textResultStats.setText("Avg: " + avg +
+								"\ncpu usage: " + getCpuUsage() + " clock ticks " +
+								"\nmemory usage: " + (info.nativePrivateDirty) + 
+								"\npriority: " + android.os.Process.getThreadPriority(android.os.Process.myTid()));
+	}
+
+	private long getCpuUsage(){
+
+		try {
+			RandomAccessFile reader = new RandomAccessFile("/proc/"+android.os.Process.myPid()+"/stat", "r");
+			
+			String load = reader.readLine();
+
+			String[] toks = load.split(" ");
+
+			long userScheduled		= Long.parseLong(toks[13]);
+			long kernelScheduled	= Long.parseLong(toks[14]);
+			return userScheduled+kernelScheduled;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return 0;
+	}
+
+	/**
+	 * show up dialog to choose which method to trigger
+	 */
 	protected void showChoices() {
 		new AlertDialog.Builder(MainActivity.this)
 		.setTitle(R.string.selectSource)
@@ -230,9 +361,9 @@ public class MainActivity extends Activity {
 				
 				@Override
 				public void run() {
-					double gap = System.nanoTime() - begin;
+					long gap = System.currentTimeMillis() - begin;
 					long n = counter;
-					print(gap, n);
+					print(gap, n, 3);
 				}
 			}, 1000);
 		}
@@ -240,20 +371,35 @@ public class MainActivity extends Activity {
 
 	/**
 	 * print partial data and reschedule show process
+	 * modes:
+	 * 0 - singleShot
+	 * 1 - listener
+	 * 2 - intent
+	 * 3 - listener & intent (same for both)
 	 * @param gap
 	 * @param counter
 	 */
-	private void print(double gap, long counter) {
+	private void print(long gap, long counter, int mode) {
 		if(state){
-			textResultService.setText("ELAPSED TIME [ns]:" + gap + 
-								"\n\nPACKETS COUNTED: " + counter +
-								"\n\nTotal sended: " + (counter * widget.getIntValue()) + " Byte" +
-								"\n\n PACKET'S RATE [pks/ns]:" + (double)(counter/gap));
-			String s = "";
-			for(int i=0; i<buffer.length; i++)
-				s += (buffer[i] + " | ");
-			textViewPayload.setText("\nsize: " + buffer.length + "\nPayload: " + s);
-			show();
+			opts	= (mode != 0)? ("\n\nTotal sended: "
+					+ ((counter * widget.getIntValue())/1024)
+					+ " KByte\n\nPACKET'S RATE [pks/"+unit+"]:"
+					+ (float)(counter/gap))
+					: "";
+
+			textResultService.setText("ELAPSED TIME ["+unit+"]:" + gap
+								+ "\n\nPACKETS COUNTED: " + counter
+								+ opts);
+	
+			if(buffer.length > 0){
+				s = "";
+				for(int i=0; i<buffer.length; i++){
+					s += (buffer[i] + " | ");
+				}
+				textViewPayload.setText("\nsize: " + buffer.length + "\nPayload: " + s);
+			}
+			if(mode != 0)
+				show();
 		}
 	}
 
@@ -268,25 +414,27 @@ public class MainActivity extends Activity {
 			state	= true;
 			counter	= 0;
 			handler	= new Handler();
-			switch(((AlertDialog)dialog).getListView().getCheckedItemPosition()){
+			mode = ((AlertDialog)dialog).getListView().getCheckedItemPosition();
+			unit = (mode != 0)? "ms" : "ns";
+			switch(mode){
 			case 0:	//ONE SHOT
 				try {
 					IBenchService.setOneShotPacketSize(widget.getIntValue());
-					begin = System.nanoTime();
-					buffer = IBenchService.getOneShotPacket();
-					stop = System.nanoTime();
-					print(stop-begin, 1);
+					begin	= System.nanoTime();
+					buffer	= IBenchService.getOneShotPacket();
+					stop	= System.nanoTime();
+					print(stop-begin, 1, 0);
 					state = false;
+					saveStatElement();
 				} catch (RemoteException e) {
 					Log.e("AIDL", "START SEND ERROR");
 				}
 				break;
 			case 1:	//LISTENER
-				Log.e("yes", "case 1");
 				try {
 					IBenchService.setOneShotPacketSize(widget.getIntValue());
 					IBenchService.bindClientListener(iListener);
-					begin = System.nanoTime();
+					begin = System.currentTimeMillis();
 					IBenchService.startListenerRunning();
 				} catch (RemoteException e) {
 					Log.e("AIDL", "START SEND ERROR");
@@ -294,7 +442,7 @@ public class MainActivity extends Activity {
 				break;
 			case 2: //INTENT
 				try {
-					begin = System.nanoTime();
+					begin = System.currentTimeMillis();
 					IBenchService.startRunning();
 					show();
 				} catch (RemoteException e) {
@@ -305,16 +453,24 @@ public class MainActivity extends Activity {
 		};
 	};
 
+	/**
+	 * set up thread to show partial result, associated to IActivityListener
+	 */
 	private void UpdateTextView(){
 		handler.post(new Runnable() {
-			
 			@Override
 			public void run() {
-				long gap = System.nanoTime() - begin;
-				textResultService.setText("ELAPSED TIME [ns]:" + gap + 
-						"\n\nPACKETS COUNTED: " + counter +
-						"\n\nTotal sended: " + (counter * widget.getIntValue()) + " Byte" +
-						"\n\nPACKET'S RATE [pks/ns]:" + (double)(counter/gap));
+				gap = System.currentTimeMillis() - begin;
+				rate = ((float)counter)/((float)gap);
+				s = "";
+				for(int i=0; i<buffer.length; i++){
+					s += (buffer[i] + " | ");
+				}
+				textResultService.setText("ELAPSED TIME ["+unit+"]:" + gap + 
+										"\n\nPACKETS COUNTED: " + counter +
+										"\n\nTotal sended: " + ((counter * widget.getIntValue())/1024) + " KByte" +
+										"\n\nPACKET'S RATE [pks/"+unit+"]:" + rate);
+				textViewPayload.setText("\nsize: " + buffer.length + "\nPayload: " + s);
 			}
 		});
 	}
