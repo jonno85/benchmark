@@ -69,9 +69,9 @@ return true;
 case TRANSACTION_getNPackets:
 {
 data.enforceInterface(DESCRIPTOR);
-int _result = this.getNPackets();
+long _result = this.getNPackets();
 reply.writeNoException();
-reply.writeInt(_result);
+reply.writeLong(_result);
 return true;
 }
 case TRANSACTION_setOneShotPacketSize:
@@ -172,16 +172,16 @@ _reply.recycle();
 _data.recycle();
 }
 }
-@Override public int getNPackets() throws android.os.RemoteException
+@Override public long getNPackets() throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
-int _result;
+long _result;
 try {
 _data.writeInterfaceToken(DESCRIPTOR);
 mRemote.transact(Stub.TRANSACTION_getNPackets, _data, _reply, 0);
 _reply.readException();
-_result = _reply.readInt();
+_result = _reply.readLong();
 }
 finally {
 _reply.recycle();
@@ -266,7 +266,7 @@ static final int TRANSACTION_bindClientListener = (android.os.IBinder.FIRST_CALL
 public void startRunning() throws android.os.RemoteException;
 public long stopRunning() throws android.os.RemoteException;
 public void setBurstSize(int size) throws android.os.RemoteException;
-public int getNPackets() throws android.os.RemoteException;
+public long getNPackets() throws android.os.RemoteException;
 public boolean setOneShotPacketSize(int size) throws android.os.RemoteException;
 public byte[] getOneShotPacket() throws android.os.RemoteException;
 public void startListenerRunning() throws android.os.RemoteException;

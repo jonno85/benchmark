@@ -12,7 +12,7 @@ public class BenchMarkService extends Service{
 
 	public static final String TAG = "LOAD";
 	private long start, stop;
-	private int counter = 0;
+	private long counter = 0;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -76,11 +76,11 @@ public class BenchMarkService extends Service{
 			this.running = false;
 			stopSender();
 			stop = System.currentTimeMillis();
-			return stop-start;
+			return (stop-start);
 		}
 
 		@Override
-		public int getNPackets() throws RemoteException {
+		public long getNPackets() throws RemoteException {
 			return counter;
 		}
 
@@ -130,7 +130,6 @@ public class BenchMarkService extends Service{
 				public void run() {
 					while(running){
 						try {
-							Log.e("AIDL", "onReadyValue");
 							listener.onReadyValue(burst);
 							counter++;
 						} catch (RemoteException e) {
