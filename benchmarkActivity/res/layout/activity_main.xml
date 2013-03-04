@@ -13,6 +13,7 @@
         android:id="@+id/layerwidget"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:orientation="horizontal" >
 
         <com.example.benchmarkactivity.Widget
@@ -39,16 +40,10 @@
                 android:id="@+id/priority1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="MORE_FAVORABLE -1" />
-
-            <RadioButton
-                android:id="@+id/priority2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="PRIORITY_FOREGROUND -2" />
 
             <RadioButton
-                android:id="@+id/priority3"
+                android:id="@+id/priority2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="PRIORITY_DISPLAY -4" />
@@ -104,8 +99,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="2"
-            components:graph_background="@android:color/black"
-            components:view_background="#181818" />
+            components:graph_background="@android:color/black" />
 
     </LinearLayout>
 
@@ -118,8 +112,8 @@
 
         <TextView
             android:id="@+id/textViewPayload"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:scrollHorizontally="true"
             android:text="Payload: " />
     </LinearLayout>

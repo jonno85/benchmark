@@ -1,17 +1,9 @@
 package com.example.benchmarkactivity;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 
-import android.R.color;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -21,7 +13,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -57,10 +48,11 @@ public class MainActivity extends Activity {
 	 * Graphic widget
 	 */
 	static int WIDTH_INTERVAL = 1;
-	static int READ_INTERVAL, UPDATE_INTERVAL;
+	static int READ_INTERVAL, UPDATE_INTERVAL, SET = 100, DIVISOR = 10;
+
 	static boolean HAPPYICONS, MEMFREE_R, BUFFERS_R, CACHED_R, ACTIVE_R, INACTIVE_R, SWAPTOTAL_R, DIRTY_R, CPUP_R, CPUTOTALP_R, CPUAMP_R, CPURESTP_R, 
 			DRAW, MEMFREE_D, BUFFERS_D, CACHED_D, ACTIVE_D, INACTIVE_D, SWAPTOTAL_D, DIRTY_D, CPUTOTALP_D, CPUAMP_D, CPURESTP_D, RECORD;
-	static int TOTAL_INTERVALS = 100; // Default value to initialice the vector. Afterwards will be modified automatically.
+	static float TOTAL_INTERVALS = (float) 100.0; // Default value to initialize the vector. Afterwards will be modified automatically.
 	private AnGraphic graphWidget;
 	
 	//Service Variables
@@ -72,30 +64,23 @@ public class MainActivity extends Activity {
 	private String opts, s, unit;
 	private static int N_PACKETS = 5000;
 	
-	private TextView		textResultService;
-	private TextView		textResultStats;
-	private TextView		textViewPayload;
-	private Widget			widget;
-	private Button			bStartAIDLService;
-	private Button			bStopAIDLService;
-	private RadioButton		rbPriority0;
-	private RadioButton		rbPriority1;
-	private RadioButton		rbPriority2;
-	private RadioButton		rbPriority3;
+	private TextView	textResultService;
+	private TextView	textResultStats;
+	private TextView	textViewPayload;
+	private Widget		widget;
+	private Button		bStartAIDLService;
+	private Button		bStopAIDLService;
+	private RadioButton	rbPriority0;
+	private RadioButton	rbPriority1;
+	private RadioButton	rbPriority2;
 
 	private Intent		intent;
 	private BReceiver	bcRec;
 	private Handler		handler;
-	
-	/**
-	 * Serialize variables
-	 */
-	private ObjectOutputStream	oos;
-	private ObjectInputStream	ois;
-	private String statFile;
-	private HashMap<Integer, HashMap<String, LinkedList<DataContainer>>> stats;
-	
+
 	private int mode = 0; //contain which mode used to evaluate benchmark
+	private int prio = 0;
+	protected static String[] sourcesItems = new String[]{"Shot", "Listener", "Intent"};
 	
 	private IActivityListener.Stub iListener = new IActivityListener.Stub(){
 		@Override
@@ -107,23 +92,18 @@ public class MainActivity extends Activity {
 		}
 	};
 
-	private String[] sourcesItems = new String[]{"One Shot", "Listener", "Intent"};
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		statFile = getFilesDir().getPath().toString() + "/statistics";
 		setContentView(R.layout.activity_main);
-		setAndRestore();
-		mapObjectAndListener();
 
-//		ActivityManager manager = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
+		mapObjectAndListener();
+//		setAndRestore();
 	}
 
 	@Override
 	protected void onStart() {
 		super.onStart();
-
 		BoundAIDLConnection = new AIDLConnection();
 		intent = new Intent("com.example.benchmarkservice.IBenchMarkService");
 		bindService(intent, BoundAIDLConnection, Context.BIND_AUTO_CREATE);
@@ -152,20 +132,13 @@ public class MainActivity extends Activity {
 	protected void onStop() {
 		unregisterReceiver(bcRec);
 		unbindService(BoundAIDLConnection);
+		graphWidget.saveInfoToStorage();
 		super.onStop();
 	}
 
 	@Override
 	protected void onDestroy() {
-		try {
-			oos = new ObjectOutputStream(new FileOutputStream(statFile));
-			oos.writeObject(stats);
-			oos.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			super.onDestroy();
-		}
+		super.onDestroy();
 	}
 
 	/**
@@ -203,7 +176,6 @@ public class MainActivity extends Activity {
 		rbPriority0			= (RadioButton)	l.findViewById(R.id.priority0);
 		rbPriority1			= (RadioButton)	l.findViewById(R.id.priority1);
 		rbPriority2			= (RadioButton)	l.findViewById(R.id.priority2);
-		rbPriority3			= (RadioButton)	l.findViewById(R.id.priority3);
 		l					= (LinearLayout)findViewById(R.id.layerButtons);
 		bStartAIDLService	= (Button)		l.findViewById(R.id.buttonStartAIDL);
 		bStopAIDLService	= (Button)		l.findViewById(R.id.buttonStopAIDL);
@@ -214,8 +186,6 @@ public class MainActivity extends Activity {
 		l					= (LinearLayout)findViewById(R.id.layerPayload);
 		textViewPayload		= (TextView)	l.findViewById(R.id.textViewPayload);
 
-		rbPriority0.setChecked(true);
-		
 		bStartAIDLService.setOnClickListener(new OnClickListener() {
 			
 			@Override
@@ -234,35 +204,33 @@ public class MainActivity extends Activity {
 			public void onClick(View v) {
 				if(state){
 					try{
-//						servGap = 
 						IBenchService.stopRunning();
-						stop	= System.currentTimeMillis();
-						state	= false;
-						handler	= null;
+						gap		= System.currentTimeMillis() - begin;
 						loss	= (IBenchService.getNPackets() - counter);
 						loss	= (loss>0)? loss : 0;
-						gap		= stop - begin;
 						rate	= ((float)counter)/((float)gap);
+						
 						textResultService.setText("ELAPSED TIME ["+unit+"]:" +
 												"\nactivity: " + gap + 
-//												"\nservice: " + servGap + 
 												"\n\nPACKETS COUNTED:" +
 												"\nactivity: " + counter +
 												"\nservice: " + IBenchService.getNPackets() +
 												"\n\nTotal sended: " + ((counter * widget.getIntValue())/1024) + " KByte" +
 												"\n\n PACKET'S RATE [pks/"+unit+"]:" +
 												"\nActivity rate: " + rate + 
-//												"\nService rate: " + (float)(IBenchService.getNPackets()/servGap) +
 												"\nPackets loss [n]: " + loss +
-												((loss > 0)? "\nPackets loss rate [n/"+unit+"]: "+ (float)(loss/gap) : "" ));
+												((loss > 0)? "\nPackets loss rate [n/"+unit+"]: "+ ((float)loss)/((float)gap) : "" ));
 						saveStatElement();
+
+						state	= false;
+						handler	= null;
 					} catch(RemoteException e){
 						Log.e("AIDL", "STOP SEND ERROR");
 					}
 				}
 			}
 		});
-		
+
 		widget.addLeftClickListener(new OnClickListener() {
 			
 			@Override
@@ -274,7 +242,7 @@ public class MainActivity extends Activity {
 				}
 			}
 		});
-		
+
 		widget.addRightClickListener(new OnClickListener() {
 			
 			@Override
@@ -288,14 +256,20 @@ public class MainActivity extends Activity {
 		});
 
 		setRadioButtonListener();
+//		graphWidget.setAndRestore();
 	}
 
+	/**
+	 * Set default checked value and add all the complementary listener to the radio button
+	 */
 	private void setRadioButtonListener() {
+		rbPriority0.setChecked(true);
 		rbPriority0.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
 				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+				prio = 0;
 			}
 		});
 		
@@ -303,7 +277,8 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE);
+				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND);
+				prio = -2;
 			}
 		});
 		
@@ -311,79 +286,16 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND);
-			}
-		});
-		
-		rbPriority3.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
 				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY);
+				prio = -4;
 			}
 		});
-	}
-
-	@SuppressWarnings("unchecked")
-	public void setAndRestore(){
-		try {
-			ois = new ObjectInputStream(new FileInputStream(statFile));
-			stats = (HashMap<Integer, HashMap<String, LinkedList<DataContainer>>>) ois.readObject();
-		} catch (ClassNotFoundException ex) {
-			initStats();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if(stats == null)
-			initStats();
-	}
-
-	private void initStats(){
-		stats = new HashMap<Integer, HashMap<String,LinkedList<DataContainer>>>();
-		for(int i=0; i<Widget.values.length; i++){
-			HashMap<String, LinkedList<DataContainer>> subMap = new HashMap<String, LinkedList<DataContainer>>(3);
-			for(int j=0; j<sourcesItems.length; j++){
-				subMap.put(sourcesItems[j], new LinkedList<DataContainer>());
-			}
-			stats.put(Widget.values[i], subMap);
-		}
 	}
 
 	private void saveStatElement(){
-		float avgRate		= 0;
-		float avgPackets	= 0;
-		float avgLoss		= 0;
-		
-		HashMap<String, LinkedList<DataContainer>> map = stats.get(widget.getIntValue());
-		LinkedList<DataContainer> list = map.get(sourcesItems[mode]);
-
-		Iterator<DataContainer> i = list.iterator();
-		float index=0;
-		while(i.hasNext()){
-			DataContainer c = i.next();
-			avgRate		+= c.getRate();
-			avgPackets	+= c.getPackets();
-			avgLoss		+= c.getLoss();
-			index++;
-		}
-		avgRate		/= index;
-		avgPackets	/= index;
-		avgLoss		/= index;
-		
-		
-//		MemoryInfo info = new MemoryInfo();
-//		Debug.getMemoryInfo(info);
-		Log.e("SAVED", "gap "+gap + " counter " + counter +" rate " + rate + " avg " + avgRate +" loss " + loss + " getCpuUsage() " +getCpuUsage());
-		list.add(new DataContainer(gap, counter, rate, avgRate, loss, getCpuUsage()));
-		textResultStats.setText("AVG (Set "+index+"):" +
-								"\nRate: " 		+ avgRate		+
-								"\nPackets: "	+ avgPackets	+
-								"\nLost: "		+ avgLoss		+ 
-								"\ncpu usage: " + getCpuUsage() + " clock ticks " +
-//								"\nmemory usage: " + (info.nativePrivateDirty) + 
-								"\npriority: " + android.os.Process.getThreadPriority(android.os.Process.myTid()));
+		String report = graphWidget.addDataContainer(widget.getIntValue(), mode, new DataContainer(gap, counter, rate, loss, getCpuUsage(), prio));
+		graphWidget.invalidate();
+		textResultStats.setText(report + "\npriority: " + android.os.Process.getThreadPriority(android.os.Process.myTid()));
 	}
 
 	private long getCpuUsage(){
@@ -478,7 +390,7 @@ public class MainActivity extends Activity {
 			opts	= (mode != 0)? ("\n\nTotal sended: "
 					+ ((counter * widget.getIntValue())/1024)
 					+ " KByte\n\nPACKET'S RATE [pks/"+unit+"]:"
-					+ (float)(counter/gap))
+					+ (float)((float)counter)/((float)gap))
 					: "";
 
 			textResultService.setText("ELAPSED TIME ["+unit+"]:" + gap
@@ -517,7 +429,8 @@ public class MainActivity extends Activity {
 					begin	= System.nanoTime();
 					buffer	= IBenchService.getOneShotPacket();
 					stop	= System.nanoTime();
-					print(stop-begin, 1, 0);
+					gap		= stop - begin;
+					print(gap, 1, 0);
 					state = false;
 					saveStatElement();
 				} catch (RemoteException e) {

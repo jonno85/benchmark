@@ -148,6 +148,10 @@ public class Widget extends LinearLayout {
 		registeredListener.remove(l);
 	}
 
+	public int getIndex(){
+		return index;
+	}
+
 	public int getIntValue(){
 		return values[index];
 	}
@@ -161,7 +165,7 @@ public class Widget extends LinearLayout {
 			--index;
 		}
 		textValue.setText(""+values[this.index] + " Byte");
-		Log.e("WIDGET", "" + values[index]);
+//		Log.e("WIDGET", "" + values[index]);
 		return values[index];
 	}
 
@@ -172,7 +176,7 @@ public class Widget extends LinearLayout {
 			index = values.length-1;
 		}
 		textValue.setText(""+values[this.index] + " Byte");
-		Log.e("WIDGET", "" + values[index]);
+//		Log.e("WIDGET", "" + values[index]);
 		return values[index];
 	}
 }
