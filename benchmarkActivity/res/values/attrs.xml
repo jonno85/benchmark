@@ -5,9 +5,10 @@
 	</declare-styleable>
 	
 	<declare-styleable name="graph">
-	    <attr name="graph_background" format="color"></attr>
-	    <attr name="view_background" format="color"></attr>
-	    <attr name="lines_color" format="color"></attr>
-	    <attr name="text_size" format="integer"></attr>
+	    <attr name="graph_background"	format="color"></attr>
+	    <attr name="view_background"	format="color"></attr>
+	    <attr name="lines_color"			format="color"></attr>
+	    <attr name="lines_color_low"	format="color"></attr>
+	    <attr name="text_size"				format="integer"></attr>
 	</declare-styleable>
 </resources>

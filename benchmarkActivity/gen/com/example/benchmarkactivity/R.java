@@ -35,6 +35,15 @@ theme attribute (in the form
 containing a value of this type.
          */
         public static final int lines_color=0x7f010003;
+        /** <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
+"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int lines_color_low=0x7f010004;
         /** <p>Must be an integer value, such as "<code>100</code>".
 <p>This may also be a reference to a resource (in the form
 "<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
@@ -42,7 +51,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int text_size=0x7f010004;
+        public static final int text_size=0x7f010005;
         /** <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
 <p>This may also be a reference to a resource (in the form
@@ -155,16 +164,19 @@ containing a value of this type.
            <tr><th>Attribute</th><th>Description</th></tr>
            <tr><td><code>{@link #graph_graph_background com.example.benchmarkactivity:graph_background}</code></td><td></td></tr>
            <tr><td><code>{@link #graph_lines_color com.example.benchmarkactivity:lines_color}</code></td><td></td></tr>
+           <tr><td><code>{@link #graph_lines_color_low com.example.benchmarkactivity:lines_color_low}</code></td><td></td></tr>
            <tr><td><code>{@link #graph_text_size com.example.benchmarkactivity:text_size}</code></td><td></td></tr>
            <tr><td><code>{@link #graph_view_background com.example.benchmarkactivity:view_background}</code></td><td></td></tr>
            </table>
            @see #graph_graph_background
            @see #graph_lines_color
+           @see #graph_lines_color_low
            @see #graph_text_size
            @see #graph_view_background
          */
         public static final int[] graph = {
-            0x7f010001, 0x7f010002, 0x7f010003, 0x7f010004
+            0x7f010001, 0x7f010002, 0x7f010003, 0x7f010004,
+            0x7f010005
         };
         /**
           <p>This symbol is the offset where the {@link com.example.benchmarkactivity.R.attr#graph_background}
@@ -197,6 +209,21 @@ containing a value of this type.
         */
         public static final int graph_lines_color = 2;
         /**
+          <p>This symbol is the offset where the {@link com.example.benchmarkactivity.R.attr#lines_color_low}
+          attribute's value can be found in the {@link #graph} array.
+
+
+          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
+"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name android:lines_color_low
+        */
+        public static final int graph_lines_color_low = 3;
+        /**
           <p>This symbol is the offset where the {@link com.example.benchmarkactivity.R.attr#text_size}
           attribute's value can be found in the {@link #graph} array.
 
@@ -209,7 +236,7 @@ theme attribute (in the form
 containing a value of this type.
           @attr name android:text_size
         */
-        public static final int graph_text_size = 3;
+        public static final int graph_text_size = 4;
         /**
           <p>This symbol is the offset where the {@link com.example.benchmarkactivity.R.attr#view_background}
           attribute's value can be found in the {@link #graph} array.

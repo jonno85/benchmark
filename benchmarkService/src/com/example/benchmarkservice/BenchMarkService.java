@@ -16,7 +16,6 @@ public class BenchMarkService extends Service{
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		Log.e("SERVICE", "ON BIND");
 		return apiEndPoint;
 	}
 
@@ -123,7 +122,6 @@ public class BenchMarkService extends Service{
 			sender = null;
 			counter = 0;
 			this.running = true;
-			Log.e("AIDL", "startListenerRunning");
 			sender = new Thread(new Runnable() {
 				
 				@Override
@@ -138,7 +136,6 @@ public class BenchMarkService extends Service{
 					}
 				}
 			});
-			Log.e("AIDL", "start");
 			sender.start();
 		}
 	};

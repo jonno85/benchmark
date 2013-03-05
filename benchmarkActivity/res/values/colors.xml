@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="orange">#ffff6600</color>
+    <color name="yellow">#ffffcc00</color>
+    <color name="cpuamp">#ff804000</color>
+    <color name="cpurestppaint">#ff7d0000</color>
+    <color name="swaptotalpaint">#ff006000</color>
+    <color name="dirtypaint">#ff800080</color>
+
+</resources>

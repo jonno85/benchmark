@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
 	 * Graphic widget
 	 */
 	static int WIDTH_INTERVAL = 1;
-	static int READ_INTERVAL, UPDATE_INTERVAL, SET = 100, DIVISOR = 10;
+	static int SET = 100, DIVISOR = 10;
 
 	static boolean HAPPYICONS, MEMFREE_R, BUFFERS_R, CACHED_R, ACTIVE_R, INACTIVE_R, SWAPTOTAL_R, DIRTY_R, CPUP_R, CPUTOTALP_R, CPUAMP_R, CPURESTP_R, 
 			DRAW, MEMFREE_D, BUFFERS_D, CACHED_D, ACTIVE_D, INACTIVE_D, SWAPTOTAL_D, DIRTY_D, CPUTOTALP_D, CPUAMP_D, CPURESTP_D, RECORD;
@@ -98,7 +98,7 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 
 		mapObjectAndListener();
-//		setAndRestore();
+		
 	}
 
 	@Override
@@ -107,6 +107,7 @@ public class MainActivity extends Activity {
 		BoundAIDLConnection = new AIDLConnection();
 		intent = new Intent("com.example.benchmarkservice.IBenchMarkService");
 		bindService(intent, BoundAIDLConnection, Context.BIND_AUTO_CREATE);
+		
 	}
 
 	@Override
@@ -184,7 +185,7 @@ public class MainActivity extends Activity {
 		textResultStats		= (TextView)	l.findViewById(R.id.textView2);
 		graphWidget			= (AnGraphic)	l.findViewById(R.id.graphWidget);
 		l					= (LinearLayout)findViewById(R.id.layerPayload);
-		textViewPayload		= (TextView)	l.findViewById(R.id.textViewPayload);
+//		textViewPayload		= (TextView)	l.findViewById(R.id.textViewPayload);
 
 		bStartAIDLService.setOnClickListener(new OnClickListener() {
 			
@@ -256,7 +257,6 @@ public class MainActivity extends Activity {
 		});
 
 		setRadioButtonListener();
-//		graphWidget.setAndRestore();
 	}
 
 	/**
@@ -295,7 +295,7 @@ public class MainActivity extends Activity {
 	private void saveStatElement(){
 		String report = graphWidget.addDataContainer(widget.getIntValue(), mode, new DataContainer(gap, counter, rate, loss, getCpuUsage(), prio));
 		graphWidget.invalidate();
-		textResultStats.setText(report + "\npriority: " + android.os.Process.getThreadPriority(android.os.Process.myTid()));
+		textResultStats.setText(report + "\npriority: " + android.os.Process.getThreadPriority(android.os.Process.myTid()) + "\nMode: " + sourcesItems[mode] );
 	}
 
 	private long getCpuUsage(){
@@ -331,8 +331,7 @@ public class MainActivity extends Activity {
 			workBefore = work;
 			totalBefore = total;
 			workAMBefore = workAM;
-			Log.e("SAVED", "workT "+workT + " totalT " + totalT +" workAMT " + workAMT + " workAM " + workAM);
-			
+
 			return workAMT;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -402,7 +401,7 @@ public class MainActivity extends Activity {
 				for(int i=0; i<buffer.length; i++){
 					s += (buffer[i] + " | ");
 				}
-				textViewPayload.setText("\nsize: " + buffer.length + "\nPayload: " + s);
+//				textViewPayload.setText("\nsize: " + buffer.length + "\nPayload: " + s);
 			}
 			if(mode != 0)
 				show();
@@ -477,7 +476,7 @@ public class MainActivity extends Activity {
 										"\n\nPACKETS COUNTED: " + counter +
 										"\n\nTotal sended: " + ((counter * widget.getIntValue())/1024) + " KByte" +
 										"\n\nPACKET'S RATE [pks/"+unit+"]:" + rate);
-				textViewPayload.setText("\nsize: " + buffer.length + "\nPayload: " + s);
+//				textViewPayload.setText("\nsize: " + buffer.length + "\nPayload: " + s);
 			}
 		});
 	}

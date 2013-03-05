@@ -13,7 +13,6 @@
         android:id="@+id/layerwidget"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:orientation="horizontal" >
 
         <com.example.benchmarkactivity.Widget
@@ -75,7 +74,7 @@
         android:id="@+id/layerTexts"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="2"
+        android:layout_weight="3"
         android:orientation="horizontal" >
 
         <TextView
@@ -114,8 +113,8 @@
             android:id="@+id/textViewPayload"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scrollHorizontally="true"
-            android:text="Payload: " />
+            android:scrollHorizontally="true" />
+<!--             android:text="Payload: " -->
     </LinearLayout>
 
 </LinearLayout>
