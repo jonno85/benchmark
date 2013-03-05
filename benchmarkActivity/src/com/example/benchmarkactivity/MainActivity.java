@@ -47,14 +47,13 @@ public class MainActivity extends Activity {
 	/**
 	 * Graphic widget
 	 */
-	static int WIDTH_INTERVAL = 1;
 	static int SET = 100, DIVISOR = 10;
-
-	static boolean HAPPYICONS, MEMFREE_R, BUFFERS_R, CACHED_R, ACTIVE_R, INACTIVE_R, SWAPTOTAL_R, DIRTY_R, CPUP_R, CPUTOTALP_R, CPUAMP_R, CPURESTP_R, 
-			DRAW, MEMFREE_D, BUFFERS_D, CACHED_D, ACTIVE_D, INACTIVE_D, SWAPTOTAL_D, DIRTY_D, CPUTOTALP_D, CPUAMP_D, CPURESTP_D, RECORD;
-	static float TOTAL_INTERVALS = (float) 100.0; // Default value to initialize the vector. Afterwards will be modified automatically.
-	private AnGraphic graphWidget;
 	
+	//scaling graph values
+	//OS one shot
+	//LI listener intent
+	static int OSSCALE = 3000, LISCALE = DIVISOR;
+
 	//Service Variables
 	private static AIDLConnection	BoundAIDLConnection;
 	private IBenchMarkService		IBenchService;
@@ -73,13 +72,17 @@ public class MainActivity extends Activity {
 	private RadioButton	rbPriority0;
 	private RadioButton	rbPriority1;
 	private RadioButton	rbPriority2;
+	private AnGraphic	graphWidget;
 
 	private Intent		intent;
 	private BReceiver	bcRec;
 	private Handler		handler;
 
-	private int mode = 0; //contain which mode used to evaluate benchmark
+	//contain which mode used to evaluate benchmark
+	private int mode = 0;
+	//priority select for the thread
 	private int prio = 0;
+	
 	protected static String[] sourcesItems = new String[]{"Shot", "Listener", "Intent"};
 	
 	private IActivityListener.Stub iListener = new IActivityListener.Stub(){

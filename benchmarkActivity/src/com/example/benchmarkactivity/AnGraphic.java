@@ -9,7 +9,6 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Vector;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -28,15 +27,9 @@ public class AnGraphic extends View {
 	private static boolean INIT;
 	private int Y_BOTTOM_SPACE=16;
 	private int X_LEFT_SPACE=3;
-	private int xLeft, xRight, yTop, yBottom, graphicHeight, graphicWidth, minutes, seconds;
-	private int memTotal = 100;
-	private String updateIntervalText = "Data Set"; // These strings will be afterwards updated with the right language.
-	private Paint graphicBackgroudPaint, viewBackgroudPaint, circlePaint,
-			textRecordingPaint, linesPaint, linesPaintLow, ratePaint, cPURestPPaint, memFreePaint,
-			buffersPaint, cachedPaint, activePaint, inactivePaint, swapTotalPaint, dirtyPaint;
+	private int xLeft, xRight, yTop, yBottom, graphicHeight, graphicWidth;
+	private Paint graphicBackgroudPaint, viewBackgroudPaint, linesPaint, linesPaintLow;
 	private Paint[] colors;
-	private Vector<String> memFree, buffers, cached, active, inactive, swapTotal, dirty;
-	private Vector<Float> cPUAMP, cPURestP;
 	
 	private HashMap<String, LinkedList<DataContainer>> stats = null;
 	private int textSize;
@@ -78,7 +71,7 @@ public class AnGraphic extends View {
 		}
 
 		// In Frame Legend
-		canvas.drawText("| " + updateIntervalText+": "+MainActivity.SET, xRight-5, yTop+15, colors[0]);
+		canvas.drawText("| Data Set: "+MainActivity.SET, xRight-5, yTop+15, colors[0]);
 		canvas.drawText("Priority:",xRight-150, yTop+15, colors[0]);
 		canvas.drawText("0",		xRight-100, yTop+15, colors[0]);
 		canvas.drawText("-2",		xRight-115, yTop+15, colors[3]);
@@ -108,8 +101,8 @@ public class AnGraphic extends View {
 			canvas.drawText("0",	xLeft-X_LEFT_SPACE, yBottom,				 colors[4]);
 			
 			canvas.drawLine(xLeft, yTop+graphicHeight/6,	xRight, yTop+graphicHeight/6,	linesPaintLow);	//0.5
-			canvas.drawLine(xLeft, yTop+graphicHeight/2,	xRight, yTop+graphicHeight/2,	linesPaint);		//1.5
 			canvas.drawLine(xLeft, yTop+graphicHeight/6*2,	xRight, yTop+graphicHeight/6*2,	linesPaint);	//1.
+			canvas.drawLine(xLeft, yTop+graphicHeight/2,	xRight, yTop+graphicHeight/2,	linesPaint);	//1.5
 			canvas.drawLine(xLeft, yTop+graphicHeight/6*4,	xRight, yTop+graphicHeight/6*4,	linesPaint);	//2.
 			canvas.drawLine(xLeft, yTop+graphicHeight/6*5,	xRight, yTop+graphicHeight/6*5,	linesPaintLow);	//2.5
 		} else {
@@ -129,46 +122,16 @@ public class AnGraphic extends View {
 		canvas.drawText("Steps",xRight, yBottom+25, colors[4]);
 		for (int n=0; n<=MainActivity.DIVISOR; n++){
 			float step = graphicWidth/MainActivity.DIVISOR;
-			canvas.drawLine(xRight-n*step,
+			canvas.drawLine(xRight - n * step,
 							yTop,
-							xRight-n*step,
+							xRight - n * step,
 							yBottom,
 							linesPaint);
 			canvas.drawText(((MainActivity.DIVISOR - n) * 10) + "'",
-							xRight - n*step,
+							xRight - n * step,
 							yBottom + Y_BOTTOM_SPACE,
 							colors[4]);
 			
-		}
-	}
-
-	/**
-	 * It draws the line of the taken memory value vector. This action consumes quite system resources.
-	 * 
-	 * This method is only called from the onDraw() overrided method.
-	 */
-	private void drawLine(Vector<String> y, Canvas canvas, Paint paint) {
-		if(y.size()>1){
-			for(int m=0; m<(y.size()-1) && m<MainActivity.TOTAL_INTERVALS; m++) {
-				canvas.drawLine(xRight-MainActivity.WIDTH_INTERVAL*m,
-						yBottom-Integer.parseInt(y.elementAt(m))*graphicHeight/memTotal,
-						xRight-MainActivity.WIDTH_INTERVAL*m-MainActivity.WIDTH_INTERVAL,
-						yBottom-Integer.parseInt(y.elementAt(m+1))*graphicHeight/memTotal, paint);
-			}
-		}
-	}
-
-	/**
-	 * It draws the line of the taken CPU usage value vector. This action consumes quite system resources.
-	 * 
-	 * This method is only called from the onDraw() overrided method.
-	 */
-	private void drawLineFloat(Vector<Float> y, Canvas canvas, Paint paint) {
-		if(y.size()>1) for(int m=0; m<(y.size()-1) && m<MainActivity.TOTAL_INTERVALS; m++) {
-			canvas.drawLine(xRight-MainActivity.WIDTH_INTERVAL*m,
-					yBottom-y.elementAt(m)*graphicHeight/100,
-					xRight-MainActivity.WIDTH_INTERVAL*m-MainActivity.WIDTH_INTERVAL,
-					yBottom-y.elementAt(m+1)*graphicHeight/100, paint);
 		}
 	}
 
@@ -184,11 +147,13 @@ public class AnGraphic extends View {
 				c = it.next();
 				x = (counter * (float)(graphicWidth/MainActivity.SET)) + xLeft;
 				counter++;
+
 				if(mode != 0){
-					y = (graphicHeight - ((float)(c.getRate() * graphicHeight)/10))+yTop;
+					y = (graphicHeight - ((float)(c.getRate() * graphicHeight)/MainActivity.LISCALE))+yTop;
 				}else{
-					y = (graphicHeight - (float)(((c.getTimeGap()/1000) * graphicHeight)/3000))+yTop;
+					y = (graphicHeight - (float)(((c.getTimeGap()/1000) * graphicHeight)/MainActivity.OSSCALE))+yTop;
 				}
+
 				canvas.drawCircle(x, y, RADIUS, getColor(c.getPrio()));
 			}
 		} else {
@@ -197,7 +162,7 @@ public class AnGraphic extends View {
 	}
 
 	/**
-	 * retrieve different color based on priority int
+	 * retrieve different color based on priority int number
 	 * @param prio
 	 * @return
 	 */
@@ -249,25 +214,12 @@ public class AnGraphic extends View {
 		graphicWidth	= xRight - xLeft;
 		graphicHeight	= yBottom - yTop;
 
-		circlePaint = getPaint(Color.RED, Paint.Align.CENTER, textSize, false);
-//		linesPaint = getPaint(Color.parseColor(MainActivity.LINES_COLOR), Paint.Align.CENTER, textSize, false);
 		colors = new Paint[5];
 		colors[0] = getPaint(Color.GREEN,		Paint.Align.RIGHT, textSize, true);	//text GREEN
 		colors[1] = getPaint(Color.BLUE,		Paint.Align.RIGHT, textSize, true); //text BLUE
 		colors[2] = getPaint(Color.RED,		Paint.Align.RIGHT, textSize, true); //text RED
 		colors[3] = getPaint(Color.YELLOW,	Paint.Align.RIGHT, textSize, true); //text YELLOW
 		colors[4] = getPaint(Color.BLACK,		Paint.Align.RIGHT, textSize, true); //text BLACK
-		
-//		textRecordingPaint = getPaint(Color.LTGRAY, Paint.Align.LEFT, textSize, true);
-//		ratePaint = getPaint(R.color.cpuamp, Paint.Align.CENTER, textSize, false);
-//		cPURestPPaint = getPaint(R.color.cpurestppaint, Paint.Align.CENTER, textSize, false);
-//		memFreePaint = getPaint(Color.GREEN, Paint.Align.CENTER, textSize, false);
-//		buffersPaint = getPaint(Color.BLUE, Paint.Align.CENTER, textSize, false);
-//		cachedPaint = getPaint(Color.CYAN, Paint.Align.CENTER, textSize, false);
-//		activePaint = getPaint(Color.YELLOW, Paint.Align.CENTER, textSize, false);
-//		inactivePaint = getPaint(Color.MAGENTA, Paint.Align.CENTER, textSize, false);
-//		swapTotalPaint = getPaint(R.color.swaptotalpaint, Paint.Align.CENTER, textSize, false);
-//		dirtyPaint = getPaint(R.color.dirtypaint, Paint.Align.CENTER, textSize, false);
 
 		if(stats == null){
 			setAndRestore();
@@ -299,9 +251,11 @@ public class AnGraphic extends View {
 	 */
 	void setLinkedLists(HashMap<String, LinkedList<DataContainer>> stats, Context myContext) {
 		this.stats = stats;
-		updateIntervalText = myContext.getString(R.string.graphic_update_interval);
 	}
 
+	/**
+	 * save stats file to serialization file and close file objects
+	 */
 	public void saveInfoToStorage(){
 		try {
 			oos = new ObjectOutputStream(new FileOutputStream(statFile));
@@ -315,6 +269,9 @@ public class AnGraphic extends View {
 		}
 	}
 
+	/**
+	 * probe if there is an already stats object from serialization file or init a new one
+	 */
 	private void setAndRestore(){
 		try {
 			ois		= new ObjectInputStream(new FileInputStream(statFile));
@@ -332,6 +289,9 @@ public class AnGraphic extends View {
 		}
 	}
 
+	/**
+	 * Initialize stats file with its internal structure
+	 */
 	private void initStats(){
 		stats = new HashMap<String, LinkedList<DataContainer>>();
 		for(int i=0; i<Widget.values.length; i++){
@@ -341,14 +301,22 @@ public class AnGraphic extends View {
 		}
 	}
 
+	/**
+	 * add new element on internal stats file and calculate the new avgs values updated
+	 * @param key
+	 * @param mode
+	 * @param dc
+	 * @return
+	 */
 	public String addDataContainer(int key, int mode, DataContainer dc){
 		DataContainer c;
 		float avgRate	 = 0;
 		float avgPackets = 0;
 		float avgLoss	 = 0;
 		float index		 = 1;
+
 		this.mode	= mode;
-		hashKey		= ""+key+mode;
+		hashKey		= "" + key + mode;
 
 		LinkedList<DataContainer> list = stats.get(hashKey);
 		if(list == null){
@@ -373,11 +341,11 @@ public class AnGraphic extends View {
 		dc.setAvgLoss(avgLoss);
 		list.add(dc);
 
-		String opts = (mode !=0)? "\nRate: " 	+ avgRate		+
-								  "\nPackets: "	+ avgPackets	+
-								  "\nLost: "	+ avgLoss		
+		String opts = (mode !=0)? "\nRate: " 	+ avgRate	 +
+								  "\nPackets: "	+ avgPackets +
+								  "\nLost: "	+ avgLoss
 								  : "";
-		String report = "AVG (Set "+index+"):" + opts + 
+		String report = "AVG (Set "+index+"):" + opts +
 						"\ncpu usage: " + dc.getCpuLoad() + " clock ticks ";
 		
 		return report;
