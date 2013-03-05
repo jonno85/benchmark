@@ -82,6 +82,7 @@ public class MainActivity extends Activity {
 	private int mode = 0;
 	//priority select for the thread
 	private int prio = 0;
+	private int tid;
 	
 	protected static String[] sourcesItems = new String[]{"Shot", "Listener", "Intent"};
 	
@@ -111,6 +112,7 @@ public class MainActivity extends Activity {
 		intent = new Intent("com.example.benchmarkservice.IBenchMarkService");
 		bindService(intent, BoundAIDLConnection, Context.BIND_AUTO_CREATE);
 		
+		tid = android.os.Process.myTid();
 	}
 
 	@Override
@@ -267,11 +269,12 @@ public class MainActivity extends Activity {
 	 */
 	private void setRadioButtonListener() {
 		rbPriority0.setChecked(true);
+		
 		rbPriority0.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+				android.os.Process.setThreadPriority(tid,android.os.Process.THREAD_PRIORITY_DEFAULT);
 				prio = 0;
 			}
 		});
@@ -280,7 +283,7 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND);
+				android.os.Process.setThreadPriority(tid,android.os.Process.THREAD_PRIORITY_FOREGROUND);
 				prio = -2;
 			}
 		});
@@ -289,7 +292,7 @@ public class MainActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY);
+				android.os.Process.setThreadPriority(tid,android.os.Process.THREAD_PRIORITY_DISPLAY);
 				prio = -4;
 			}
 		});
