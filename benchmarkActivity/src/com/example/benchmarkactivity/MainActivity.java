@@ -402,13 +402,13 @@ public class MainActivity extends Activity {
 								+ "\n\nPACKETS COUNTED: " + counter
 								+ opts);
 	
-			if(buffer.length > 0){
-				s = "";
-				for(int i=0; i<buffer.length; i++){
-					s += (buffer[i] + " | ");
-				}
+//			if(buffer.length > 0){
+//				s = "";
+//				for(int i=0; i<buffer.length; i++){
+//					s += (buffer[i] + " | ");
+//				}
 //				textViewPayload.setText("\nsize: " + buffer.length + "\nPayload: " + s);
-			}
+//			}
 			if(mode != 0)
 				show();
 		}
@@ -474,10 +474,10 @@ public class MainActivity extends Activity {
 			public void run() {
 				gap = System.currentTimeMillis() - begin;
 				rate = ((float)counter)/((float)gap);
-				s = "";
-				for(int i=0; i<buffer.length; i++){
-					s += (buffer[i] + " | ");
-				}
+//				s = "";
+//				for(int i=0; i<buffer.length; i++){
+//					s += (buffer[i] + " | ");
+//				}
 				textResultService.setText("ELAPSED TIME ["+unit+"]:" + gap + 
 										"\n\nPACKETS COUNTED: " + counter +
 										"\n\nTotal sended: " + ((counter * widget.getIntValue())/1024) + " KByte" +

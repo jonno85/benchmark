@@ -23,7 +23,7 @@ import android.view.View;
 
 public class AnGraphic extends View {
 
-	private static final float RADIUS = (float) 2.5;
+	private static final float RADIUS = (float) 2;
 	private static boolean INIT;
 	private int Y_BOTTOM_SPACE=16;
 	private int X_LEFT_SPACE=3;
@@ -66,17 +66,6 @@ public class AnGraphic extends View {
 		// Graphic background
 		canvas.drawRect(frame, graphicBackgroudPaint);
 
-		if(stats != null && !hashKey.equalsIgnoreCase("")){
-			drawData(canvas);
-		}
-
-		// In Frame Legend
-		canvas.drawText("| Data Set: "+MainActivity.SET, xRight-5, yTop+15, colors[0]);
-		canvas.drawText("Priority:",xRight-150, yTop+15, colors[0]);
-		canvas.drawText("0",		xRight-100, yTop+15, colors[0]);
-		canvas.drawText("-2",		xRight-115, yTop+15, colors[3]);
-		canvas.drawText("-4",		xRight-135, yTop+15, colors[2]);
-
 		// Graphic background
 		canvas.drawRect(rect1, viewBackgroudPaint);
 		canvas.drawRect(rect2, viewBackgroudPaint);
@@ -91,20 +80,7 @@ public class AnGraphic extends View {
 
 		// Vertical legend - Horizontal graphic grid lines
 		if(mode == 0){ //ONE SHOT MODE, collect data on different scale
-			canvas.drawText("time", xLeft-X_LEFT_SPACE, yTop, colors[4]);
-			canvas.drawText("3",	xLeft-X_LEFT_SPACE, yTop+10, colors[4]);
-			canvas.drawText("2.5",	xLeft-X_LEFT_SPACE, yTop+graphicHeight/6+5,	 colors[4]);
-			canvas.drawText("2",	xLeft-X_LEFT_SPACE, yTop+graphicHeight/3+5,	 colors[4]);
-			canvas.drawText("1.5",	xLeft-X_LEFT_SPACE, yTop+graphicHeight/2+5,	 colors[4]);
-			canvas.drawText("1",	xLeft-X_LEFT_SPACE, yTop+graphicHeight/3*2+5,colors[4]);
-			canvas.drawText("0.5",	xLeft-X_LEFT_SPACE, yTop+graphicHeight/6*5+5,colors[4]);
-			canvas.drawText("0",	xLeft-X_LEFT_SPACE, yBottom,				 colors[4]);
-			
-			canvas.drawLine(xLeft, yTop+graphicHeight/6,	xRight, yTop+graphicHeight/6,	linesPaintLow);	//0.5
-			canvas.drawLine(xLeft, yTop+graphicHeight/6*2,	xRight, yTop+graphicHeight/6*2,	linesPaint);	//1.
-			canvas.drawLine(xLeft, yTop+graphicHeight/2,	xRight, yTop+graphicHeight/2,	linesPaint);	//1.5
-			canvas.drawLine(xLeft, yTop+graphicHeight/6*4,	xRight, yTop+graphicHeight/6*4,	linesPaint);	//2.
-			canvas.drawLine(xLeft, yTop+graphicHeight/6*5,	xRight, yTop+graphicHeight/6*5,	linesPaintLow);	//2.5
+			printLogScale(canvas);
 		} else {
 			canvas.drawText("rate", xLeft-X_LEFT_SPACE, yTop,						colors[4]);
 			canvas.drawText("10",	xLeft-X_LEFT_SPACE, yTop+10,					colors[4]);
@@ -118,6 +94,13 @@ public class AnGraphic extends View {
 			canvas.drawLine(xLeft, yTop+graphicHeight/4*3,	xRight, yTop+graphicHeight/4*3,	linesPaint);
 			
 		}
+		// In Frame Legend
+		canvas.drawText("| Data Set: "+MainActivity.SET, xRight-5, yTop+15, colors[0]);
+		canvas.drawText("Priority:",xRight-150, yTop+15, colors[0]);
+		canvas.drawText("0",		xRight-100, yTop+15, colors[0]);
+		canvas.drawText("-2",		xRight-115, yTop+15, colors[3]);
+		canvas.drawText("-4",		xRight-135, yTop+15, colors[2]);
+
 		// Horizontal legend
 		canvas.drawText("Steps",xRight, yBottom+25, colors[4]);
 		for (int n=0; n<=MainActivity.DIVISOR; n++){
@@ -133,11 +116,14 @@ public class AnGraphic extends View {
 							colors[4]);
 			
 		}
+
+		if(stats != null && !hashKey.equalsIgnoreCase("")){
+			drawData(canvas);
+		}
 	}
 
 	private void drawData(Canvas canvas){
-		float y = 0;
-		float x = 0;
+		float prevX = 0, prevY = 0, y = 0, x = 0;
 		DataContainer c;
 		LinkedList<DataContainer> list = stats.get(hashKey);
 		if(list != null){
@@ -146,18 +132,29 @@ public class AnGraphic extends View {
 			while (it.hasNext()) {
 				c = it.next();
 				x = (counter * (float)(graphicWidth/MainActivity.SET)) + xLeft;
-				counter++;
 
 				if(mode != 0){
 					y = (graphicHeight - ((float)(c.getRate() * graphicHeight)/MainActivity.LISCALE))+yTop;
 				}else{
-					y = (graphicHeight - (float)(((c.getTimeGap()/1000) * graphicHeight)/MainActivity.OSSCALE))+yTop;
+					//Log to value scaled to uS
+					float y1 = (float) Math.log10((int)c.getTimeGap()/1000);
+					//proportion to half scale
+					y1 = (y1 * (graphicHeight/2));
+					//move to relative graph parameter
+					y = (2 * graphicHeight + yTop - y1);
 				}
-
+				if(counter == 1){
+					prevX = x;
+					prevY = y;
+				}
 				canvas.drawCircle(x, y, RADIUS, getColor(c.getPrio()));
+				canvas.drawLine(prevX, prevY, x, y, colors[0]);
+				prevX = x;
+				prevY = y;
+				counter++;
 			}
 		} else {
-			canvas.drawText("No value stored", graphicWidth/2, graphicHeight/2, getColor(0));
+			canvas.drawText("No value stored", (graphicWidth + yTop)/2, (graphicHeight + xLeft)/2, getColor(0));
 		}
 	}
 
@@ -349,5 +346,30 @@ public class AnGraphic extends View {
 						"\ncpu usage: " + dc.getCpuLoad() + " clock ticks ";
 		
 		return report;
+	}
+
+	private void printLogScale(Canvas canvas){
+		
+		canvas.drawText("log",		xLeft-X_LEFT_SPACE, yTop - 20, colors[4]);
+		canvas.drawText("10^3 ns",	xLeft-X_LEFT_SPACE, yTop - 10, colors[4]);
+		
+		for(int i=10; i>0; i--){
+			float x = (float)(yTop+graphicHeight - ((graphicHeight/2) * Math.log10(i)));
+			if(i%2==0 || i==1){
+				canvas.drawText(""+i+"00",  xLeft-X_LEFT_SPACE, x+5, colors[4]);
+				canvas.drawLine(xLeft - 2, x, xRight, x, colors[2]);
+			} else {
+				canvas.drawLine(xLeft, x, xRight, x, colors[2]);
+			}
+		}
+		for(int i=10; i>1; i--){
+			float x = (float)(yTop+graphicHeight/2 - ((graphicHeight/2) * Math.log10(i)));
+			if(i%2==0){
+				canvas.drawText(""+i+"000",  xLeft-X_LEFT_SPACE, x+5, colors[4]);
+				canvas.drawLine(xLeft - 2, x, xRight, x, colors[2]);
+			}else{
+				canvas.drawLine(xLeft, x, xRight, x, colors[2]);
+			}
+		}
 	}
 }
