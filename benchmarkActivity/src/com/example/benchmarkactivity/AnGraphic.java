@@ -123,7 +123,7 @@ public class AnGraphic extends View {
 	}
 
 	private void drawData(Canvas canvas){
-		float prevX = 0, prevY = 0, y = 0, x = 0;
+		float prevX = 0, prevY = 0, y = 0, x = 0, yTotal = 0;
 		DataContainer c;
 		LinkedList<DataContainer> list = stats.get(hashKey);
 		if(list != null){
@@ -147,12 +147,17 @@ public class AnGraphic extends View {
 					prevX = x;
 					prevY = y;
 				}
+				yTotal += y;
 				canvas.drawCircle(x, y, RADIUS, getColor(c.getPrio()));
 				canvas.drawLine(prevX, prevY, x, y, colors[0]);
 				prevX = x;
 				prevY = y;
 				counter++;
 			}
+			yTotal = yTotal/(counter-1);
+			canvas.drawText("AVG", xRight-5, yTop+30, colors[5]);
+			canvas.drawLine(xRight-40, yTop+25, xRight-30, yTop+25, colors[5]);
+			canvas.drawLine(xLeft, yTotal, xRight, yTotal, colors[5]);
 		} else {
 			canvas.drawText("No value stored", (graphicWidth + yTop)/2, (graphicHeight + xLeft)/2, getColor(0));
 		}
@@ -211,12 +216,13 @@ public class AnGraphic extends View {
 		graphicWidth	= xRight - xLeft;
 		graphicHeight	= yBottom - yTop;
 
-		colors = new Paint[5];
-		colors[0] = getPaint(Color.GREEN,		Paint.Align.RIGHT, textSize, true);	//text GREEN
-		colors[1] = getPaint(Color.BLUE,		Paint.Align.RIGHT, textSize, true); //text BLUE
+		colors = new Paint[6];
+		colors[0] = getPaint(Color.GREEN,	Paint.Align.RIGHT, textSize, true);	//text GREEN
+		colors[1] = getPaint(Color.BLUE,	Paint.Align.RIGHT, textSize, true); //text BLUE
 		colors[2] = getPaint(Color.RED,		Paint.Align.RIGHT, textSize, true); //text RED
 		colors[3] = getPaint(Color.YELLOW,	Paint.Align.RIGHT, textSize, true); //text YELLOW
-		colors[4] = getPaint(Color.BLACK,		Paint.Align.RIGHT, textSize, true); //text BLACK
+		colors[4] = getPaint(Color.BLACK,	Paint.Align.RIGHT, textSize, true); //text BLACK
+		colors[5] = getPaint(Color.LTGRAY,	Paint.Align.RIGHT, textSize, true); //text BLACK
 
 		if(stats == null){
 			setAndRestore();
