@@ -126,6 +126,7 @@ public class MainActivity extends Activity {
 	protected void onPause() {
 		try {
 			IBenchService.stopRunning();
+			state = false;
 		} catch (RemoteException e) {
 			Log.e("Activity", "Impossible to stop remote service");
 		}
