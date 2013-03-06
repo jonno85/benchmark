@@ -108,6 +108,13 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onStart() {
 		super.onStart();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		bcRec = new BReceiver();
+		registerReceiver(bcRec, new IntentFilter("com.example.benchmarkactivity.MainActivity"));
 		BoundAIDLConnection = new AIDLConnection();
 		intent = new Intent("com.example.benchmarkservice.IBenchMarkService");
 		bindService(intent, BoundAIDLConnection, Context.BIND_AUTO_CREATE);
@@ -116,14 +123,12 @@ public class MainActivity extends Activity {
 	}
 
 	@Override
-	protected void onResume() {
-		super.onResume();
-		bcRec = new BReceiver();
-		registerReceiver(bcRec, new IntentFilter("com.example.benchmarkactivity.MainActivity"));
-	}
-
-	@Override
 	protected void onPause() {
+		try {
+			IBenchService.stopRunning();
+		} catch (RemoteException e) {
+			Log.e("Activity", "Impossible to stop remote service");
+		}
 		super.onPause();
 	}
 
